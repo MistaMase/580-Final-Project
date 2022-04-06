@@ -2,16 +2,16 @@
 //
 
 #include "stdafx.h"
-#include "CS580HW.h"
+#include "CS580FinalProject.h"
 
-#include "CS580HWDoc.h"
-#include "CS580HWView.h"
+#include "CS580FinalProjectDoc.h"
+#include "CS580FinalProjectView.h"
 #include "RotateDlg.h"
 #include "TranslateDlg.h"
 #include "ScaleDlg.h"
 
 #include "rend.h"
-#include "Application6.h"
+#include "FinalProjectApplication.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -22,9 +22,9 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWView
 
-IMPLEMENT_DYNCREATE(CCS580HWView, CView)
+IMPLEMENT_DYNCREATE(CCS580FinalProjectView, CView)
 
-BEGIN_MESSAGE_MAP(CCS580HWView, CView)
+BEGIN_MESSAGE_MAP(CCS580FinalProjectView, CView)
 	//{{AFX_MSG_MAP(CCS580HWView)
 	ON_COMMAND(IDM_RENDER, OnRender)
 	ON_COMMAND(IDM_ROTATE, OnRotate)
@@ -36,13 +36,13 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWView construction/destruction
 
-CCS580HWView::CCS580HWView()
+CCS580FinalProjectView::CCS580FinalProjectView()
 {
 	// TODO: add construction code here
 	m_pApplication = NULL;
 }
 
-CCS580HWView::~CCS580HWView()
+CCS580FinalProjectView::~CCS580FinalProjectView()
 {
 	if(m_pApplication != NULL)
 	{
@@ -50,7 +50,7 @@ CCS580HWView::~CCS580HWView()
 	}
 }
 
-BOOL CCS580HWView::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CCS580FinalProjectView::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
@@ -61,9 +61,9 @@ BOOL CCS580HWView::PreCreateWindow(CREATESTRUCT& cs)
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWView drawing
 
-void CCS580HWView::OnDraw(CDC* pDC)
+void CCS580FinalProjectView::OnDraw(CDC* pDC)
 {
-	CCS580HWDoc* pDoc = GetDocument();
+	CCS580FinalProjectDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	// TODO: add draw code for native data here
 	if(m_pApplication != NULL)
@@ -74,35 +74,35 @@ void CCS580HWView::OnDraw(CDC* pDC)
 // CCS580HWView diagnostics
 
 #ifdef _DEBUG
-void CCS580HWView::AssertValid() const
+void CCS580FinalProjectView::AssertValid() const
 {
 	CView::AssertValid();
 }
 
-void CCS580HWView::Dump(CDumpContext& dc) const
+void CCS580FinalProjectView::Dump(CDumpContext& dc) const
 {
 	CView::Dump(dc);
 }
 
-CCS580HWDoc* CCS580HWView::GetDocument() // non-debug version is inline
+CCS580FinalProjectDoc* CCS580FinalProjectView::GetDocument() // non-debug version is inline
 {
-	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CCS580HWDoc)));
-	return (CCS580HWDoc*)m_pDocument;
+	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CCS580FinalProjectDoc)));
+	return (CCS580FinalProjectDoc*)m_pDocument;
 }
 #endif //_DEBUG
 
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWView message handlers
 
-void CCS580HWView::OnRender() 
+void CCS580FinalProjectView::OnRender() 
 {
 	// TODO: Add your command handler code here
 
 	// Call renderer 
 
-	// Application 5
+	// Final Project Application
 	if(m_pApplication != NULL)
-		((Application6 *)m_pApplication)->Render();
+		((FinalProjectApplication*)m_pApplication)->Render();
 	else 
 		AfxMessageBox("Application was not allocated\n");
 
@@ -121,7 +121,7 @@ void CCS580HWView::OnRender()
 	Invalidate(true);	
 }
 
-void CCS580HWView::DrawFrameBuffer(CDC *pDC)
+void CCS580FinalProjectView::DrawFrameBuffer(CDC *pDC)
 {
 	if(m_pApplication->m_pFrameBuffer == NULL)
     {
@@ -167,24 +167,24 @@ void CCS580HWView::DrawFrameBuffer(CDC *pDC)
     DeleteObject(m_bitmap); 
 }
 
-void CCS580HWView::OnInitialUpdate() 
+void CCS580FinalProjectView::OnInitialUpdate() 
 {
 	CView::OnInitialUpdate();
 	
 	// TODO: Add your specialized code here and/or call the base class
 
-	// Assign Application 5
+	// Assign Final Project Application
 	if(m_pApplication == NULL)
 	{
-		m_pApplication = new Application6;
+		m_pApplication = new FinalProjectApplication;
 	}
 	
 	// Initialize and begin renderer
-	((Application6 *)m_pApplication)->Initialize();
+	((FinalProjectApplication*)m_pApplication)->Initialize();
 }
 
 // Callback function for rotation  
-void CCS580HWView::OnRotate() 
+void CCS580FinalProjectView::OnRotate() 
 {
 	// TODO: Add your command handler code here
 	CRotateDlg dlg;
@@ -235,7 +235,7 @@ void CCS580HWView::OnRotate()
 }
 
 // Callback function for Translation
-void CCS580HWView::OnTranslate() 
+void CCS580FinalProjectView::OnTranslate() 
 {
 	// TODO: Add your command handler code here
 	CTranslateDlg dlg;
@@ -272,7 +272,7 @@ void CCS580HWView::OnTranslate()
 }
 
 // Callback function for Scaling
-void CCS580HWView::OnScale() 
+void CCS580FinalProjectView::OnScale() 
 {
 	// TODO: Add your command handler code here
 	CScaleDlg dlg;

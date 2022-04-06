@@ -12,15 +12,15 @@
 #include "Application.h"
 #include "Gz.h"
 
-class CCS580HWView : public CView
+class CCS580FinalProjectView : public CView
 {
 protected: // create from serialization only
-	CCS580HWView();
-	DECLARE_DYNCREATE(CCS580HWView)
+	CCS580FinalProjectView();
+	DECLARE_DYNCREATE(CCS580FinalProjectView)
 
 // Attributes
 public:
-	CCS580HWDoc* GetDocument();
+	CCS580FinalProjectDoc* GetDocument();
 
 // Operations
 public:
@@ -38,7 +38,7 @@ public:
 
 // Implementation
 public:
-	virtual ~CCS580HWView();
+	virtual ~CCS580FinalProjectView();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
@@ -58,8 +58,8 @@ protected:
 };
 
 #ifndef _DEBUG  // debug version in CS580HWView.cpp
-inline CCS580HWDoc* CCS580HWView::GetDocument()
-   { return (CCS580HWDoc*)m_pDocument; }
+inline CCS580FinalProjectDoc* CCS580FinalProjectView::GetDocument()
+   { return (CCS580FinalProjectDoc*)m_pDocument; }
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

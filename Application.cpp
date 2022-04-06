@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
-#include "CS580HW.h"
+#include "CS580FinalProject.h"
 #include "Application.h"
 
 #ifdef _DEBUG

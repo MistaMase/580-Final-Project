@@ -7,8 +7,8 @@
 */
 
 #include "stdafx.h"
-#include "CS580HW.h"
-#include "Application6.h"
+#include "CS580FinalProject.h"
+#include "FinalProjectApplication.h"
 #include "Gz.h"
 #include "rend.h"
 
@@ -32,17 +32,17 @@ void shade(GzCoord norm, GzCoord color);
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-Application6::Application6()
+FinalProjectApplication::FinalProjectApplication()
 {
 
 }
 
-Application6::~Application6()
+FinalProjectApplication::~FinalProjectApplication()
 {
 	Clean();
 }
 
-int Application6::Initialize()
+int FinalProjectApplication::Initialize()
 {
 	GzCamera	camera;  
 	int		    xRes, yRes;	/* display parameters */ 
@@ -65,8 +65,8 @@ int Application6::Initialize()
 	/* 
 	 * initialize the display and the renderer 
 	 */ 
- 	m_nWidth = 256;		// frame buffer and display width
-	m_nHeight = 256;    // frame buffer and display height
+ 	m_nWidth = 1024;		// frame buffer and display width
+	m_nHeight = 1024;    // frame buffer and display height
 
 	m_pRender = new GzRender(m_nWidth, m_nHeight);
 	m_pRender->GzDefault();
@@ -194,7 +194,7 @@ GzMatrix	rotateY =
 		return(GZ_SUCCESS); 
 }
 
-int Application6::Render() 
+int FinalProjectApplication::Render()
 {
 	GzToken		nameListTriangle[3]; 	/* vertex attribute names */
 	GzPointer	valueListTriangle[3]; 	/* vertex attribute pointers */
@@ -284,7 +284,7 @@ int Application6::Render()
 		return(GZ_SUCCESS); 
 }
 
-int Application6::Clean()
+int FinalProjectApplication::Clean()
 {
 	/* 
 	 * Clean up and exit 

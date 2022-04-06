@@ -10,11 +10,11 @@
 #endif // _MSC_VER > 1000
 
 
-class CCS580HWDoc : public CDocument
+class CCS580FinalProjectDoc : public CDocument
 {
 protected: // create from serialization only
-	CCS580HWDoc();
-	DECLARE_DYNCREATE(CCS580HWDoc)
+	CCS580FinalProjectDoc();
+	DECLARE_DYNCREATE(CCS580FinalProjectDoc)
 
 // Attributes
 public:
@@ -32,7 +32,7 @@ public:
 
 // Implementation
 public:
-	virtual ~CCS580HWDoc();
+	virtual ~CCS580FinalProjectDoc();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;

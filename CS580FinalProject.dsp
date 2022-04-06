@@ -1,4 +1,4 @@
-# Microsoft Developer Studio Project File - Name="CS580HW5" - Package Owner=<4>
+# Microsoft Developer Studio Project File - Name="CS580FinalProject" - Package Owner=<4>
 # Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
@@ -8,12 +8,12 @@ CFG=CS580HW5 - Win32 Debug
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
-!MESSAGE NMAKE /f "CS580HW5.mak".
+!MESSAGE NMAKE /f "CS580FinalProject.mak".
 !MESSAGE 
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "CS580HW5.mak" CFG="CS580HW5 - Win32 Debug"
+!MESSAGE NMAKE /f "CS580FinalProject.mak" CFG="CS580FinalProject - Win32 Debug"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
@@ -54,7 +54,7 @@ LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /machine:I386
 # ADD LINK32 /nologo /subsystem:windows /machine:I386
 
-!ELSEIF  "$(CFG)" == "CS580HW5 - Win32 Debug"
+!ELSEIF  "$(CFG)" == "CS580FinalProject - Win32 Debug"
 
 # PROP BASE Use_MFC 6
 # PROP BASE Use_Debug_Libraries 1
@@ -83,8 +83,8 @@ LINK32=link.exe
 
 # Begin Target
 
-# Name "CS580HW5 - Win32 Release"
-# Name "CS580HW5 - Win32 Debug"
+# Name "CS580FinalProject - Win32 Release"
+# Name "CS580FinalProject - Win32 Debug"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -94,23 +94,23 @@ SOURCE=.\Application.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Application5.cpp
+SOURCE=.\FinalProjectApplication.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HW.cpp
+SOURCE=.\CS580FinalProject.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HW.rc
+SOURCE=.\CS580FinalProject.rc
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HWDoc.cpp
+SOURCE=.\CS580FinalProjectDoc.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HWView.cpp
+SOURCE=.\CS580FinalProjectView.cpp
 # End Source File
 # Begin Source File
 
@@ -151,19 +151,19 @@ SOURCE=.\Application.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\Application5.h
+SOURCE=.\FinalProjectApplication.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HW.h
+SOURCE=.\CS580FinalProject.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HWDoc.h
+SOURCE=.\CS580FinalProjectDoc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\CS580HWView.h
+SOURCE=.\CS580FinalProjectView.h
 # End Source File
 # Begin Source File
 
@@ -203,15 +203,15 @@ SOURCE=.\TranslateDlg.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
-SOURCE=.\res\CS580HW.ico
+SOURCE=.\res\CS580FinalProject.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\CS580HW.rc2
+SOURCE=.\res\CS580FinalProject.rc2
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\CS580HWDoc.ico
+SOURCE=.\res\CS580FinalProjectDoc.ico
 # End Source File
 # Begin Source File
 

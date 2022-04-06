@@ -50,7 +50,7 @@ BEGIN
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
     "#endif //_WIN32\r\n"
-    "#include ""res\\CS580HW.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""res\\CS580FinalProject.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""         // Standard components\r\n"
     "#endif\r\n"
     "\0"
@@ -66,8 +66,8 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON    DISCARDABLE     "res\\CS580HW.ico"
-IDR_CS580HTYPE          ICON    DISCARDABLE     "res\\CS580HWDoc.ico"
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\CS580FinalProject.ico"
+IDR_CS580HTYPE          ICON    DISCARDABLE     "res\\CS580FinalProjectDoc.ico"
 IDI_ICON1               ICON    DISCARDABLE     "res\\icon1.ico"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About CS580HW...",           ID_APP_ABOUT
+        MENUITEM "&About CS580FinalProject...",           ID_APP_ABOUT
     END
     POPUP "Render"
     BEGIN
@@ -162,11 +162,11 @@ END
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 235, 55
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About CS580HW"
+CAPTION "About CS580FinalProject"
 FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
-    LTEXT           "CS580HW Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "CS580FinalProject Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2005",IDC_STATIC,40,25,119,8
     DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
 END
@@ -243,13 +243,13 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "CS580HW MFC Application\0"
+            VALUE "FileDescription", "CS580FinalProject MFC Application\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
-            VALUE "InternalName", "CS580HW\0"
+            VALUE "InternalName", "CS580FinalProject\0"
             VALUE "LegalCopyright", "Copyright (C) 2005\0"
             VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "CS580HW.EXE\0"
-            VALUE "ProductName", "CS580HW Application\0"
+            VALUE "OriginalFilename", "CS580FinalProject.EXE\0"
+            VALUE "ProductName", "CS580FinalProject Application\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"
         END
     END
@@ -312,12 +312,12 @@ END
 
 STRINGTABLE PRELOAD DISCARDABLE 
 BEGIN
-    IDR_MAINFRAME           "CS580HW\n\nCS580H\n\n\nCS580HW.Document\nCS580H Document"
+    IDR_MAINFRAME           "CS580FinalProject\n\nCS580H\n\n\nCS580FinalProject.Document\nCS580H Document"
 END
 
 STRINGTABLE PRELOAD DISCARDABLE 
 BEGIN
-    AFX_IDS_APP_TITLE       "CS580HW"
+    AFX_IDS_APP_TITLE       "CS580FinalProject"
     AFX_IDS_IDLEMESSAGE     "Ready"
 END
 
@@ -444,7 +444,7 @@ END
 LANGUAGE 9, 1
 #pragma code_page(1252)
 #endif //_WIN32
-#include "res\CS580HW.rc2"  // non-Microsoft Visual C++ edited resources
+#include "res\CS580FinalProject.rc2"  // non-Microsoft Visual C++ edited resources
 #include "afxres.rc"         // Standard components
 #endif
 

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="FinalProjectApplication.cpp" />
+    <ClCompile Include="CS580FinalProject.cpp" />
+    <ClCompile Include="CS580FinalProjectDoc.cpp" />
+    <ClCompile Include="CS580FinalProjectView.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="rend.cpp" />
+    <ClCompile Include="RotateDlg.cpp" />
+    <ClCompile Include="ScaleDlg.cpp" />
+    <ClCompile Include="StdAfx.cpp" />
+    <ClCompile Include="tex_fun.cpp" />
+    <ClCompile Include="TranslateDlg.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="FinalProjectApplication.h" />
+    <ClInclude Include="CS580FinalProject.h" />
+    <ClInclude Include="CS580FinalProjectDoc.h" />
+    <ClInclude Include="CS580FinalProjectView.h" />
+    <ClInclude Include="gz.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="rend.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="RotateDlg.h" />
+    <ClInclude Include="ScaleDlg.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TranslateDlg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="res\CS580FinalProject.rc2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CS580FinalProject.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\CS580FinalProject.ico" />
+    <Image Include="res\CS580FinalProjectDoc.ico" />
+    <Image Include="res\icon1.ico" />
+    <Image Include="res\Toolbar.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
+</Project>

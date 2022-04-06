@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "CS580HW.h"
+#include "CS580FinalProject.h"
 
-#include "CS580HWDoc.h"
+#include "CS580FinalProjectDoc.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -15,9 +15,9 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWDoc
 
-IMPLEMENT_DYNCREATE(CCS580HWDoc, CDocument)
+IMPLEMENT_DYNCREATE(CCS580FinalProjectDoc, CDocument)
 
-BEGIN_MESSAGE_MAP(CCS580HWDoc, CDocument)
+BEGIN_MESSAGE_MAP(CCS580FinalProjectDoc, CDocument)
 	//{{AFX_MSG_MAP(CCS580HWDoc)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
 		//    DO NOT EDIT what you see in these blocks of generated code!
@@ -27,17 +27,17 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWDoc construction/destruction
 
-CCS580HWDoc::CCS580HWDoc()
+CCS580FinalProjectDoc::CCS580FinalProjectDoc()
 {
 	// TODO: add one-time construction code here
 
 }
 
-CCS580HWDoc::~CCS580HWDoc()
+CCS580FinalProjectDoc::~CCS580FinalProjectDoc()
 {
 }
 
-BOOL CCS580HWDoc::OnNewDocument()
+BOOL CCS580FinalProjectDoc::OnNewDocument()
 {
 	if (!CDocument::OnNewDocument())
 		return FALSE;
@@ -53,7 +53,7 @@ BOOL CCS580HWDoc::OnNewDocument()
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWDoc serialization
 
-void CCS580HWDoc::Serialize(CArchive& ar)
+void CCS580FinalProjectDoc::Serialize(CArchive& ar)
 {
 	if (ar.IsStoring())
 	{
@@ -69,12 +69,12 @@ void CCS580HWDoc::Serialize(CArchive& ar)
 // CCS580HWDoc diagnostics
 
 #ifdef _DEBUG
-void CCS580HWDoc::AssertValid() const
+void CCS580FinalProjectDoc::AssertValid() const
 {
 	CDocument::AssertValid();
 }
 
-void CCS580HWDoc::Dump(CDumpContext& dc) const
+void CCS580FinalProjectDoc::Dump(CDumpContext& dc) const
 {
 	CDocument::Dump(dc);
 }

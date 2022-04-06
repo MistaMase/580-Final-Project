@@ -5,6 +5,8 @@
 
 #define FRACTAL_DEPTH 8
 
+#define TEXTURE_NAME "pebbles_texture.ppm"
+
 GzColor	*image=NULL;
 int xs, ys;
 int reset = 1;
@@ -22,7 +24,7 @@ int tex_fun(float u, float v, GzColor color)
   FILE			*fd;
 
   if (reset) {          /* open and load texture file */
-    fd = fopen ("texture", "rb");
+    fd = fopen (TEXTURE_NAME, "rb");
     if (fd == NULL) {
       fprintf (stderr, "texture file not found\n");
       exit(-1);

@@ -2,11 +2,11 @@
 //
 
 #include "stdafx.h"
-#include "CS580HW.h"
+#include "CS580FinalProject.h"
 
 #include "MainFrm.h"
-#include "CS580HWDoc.h"
-#include "CS580HWView.h"
+#include "CS580FinalProjectDoc.h"
+#include "CS580FinalProjectView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -17,8 +17,8 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWApp
 
-BEGIN_MESSAGE_MAP(CCS580HWApp, CWinApp)
-	//{{AFX_MSG_MAP(CCS580HWApp)
+BEGIN_MESSAGE_MAP(CCS580FinalProjectApp, CWinApp)
+	//{{AFX_MSG_MAP(CCS580FinalProjectApp)
 	ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
 		// NOTE - the ClassWizard will add and remove mapping macros here.
 		//    DO NOT EDIT what you see in these blocks of generated code!
@@ -31,7 +31,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWApp construction
 
-CCS580HWApp::CCS580HWApp()
+CCS580FinalProjectApp::CCS580FinalProjectApp()
 {
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
@@ -40,12 +40,12 @@ CCS580HWApp::CCS580HWApp()
 /////////////////////////////////////////////////////////////////////////////
 // The one and only CCS580HWApp object
 
-CCS580HWApp theApp;
+CCS580FinalProjectApp theApp;
 
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWApp initialization
 
-BOOL CCS580HWApp::InitInstance()
+BOOL CCS580FinalProjectApp::InitInstance()
 {
 	AfxEnableControlContainer();
 
@@ -73,9 +73,9 @@ BOOL CCS580HWApp::InitInstance()
 	CSingleDocTemplate* pDocTemplate;
 	pDocTemplate = new CSingleDocTemplate(
 		IDR_MAINFRAME,
-		RUNTIME_CLASS(CCS580HWDoc),
+		RUNTIME_CLASS(CCS580FinalProjectDoc),
 		RUNTIME_CLASS(CMainFrame),       // main SDI frame window
-		RUNTIME_CLASS(CCS580HWView));
+		RUNTIME_CLASS(CCS580FinalProjectView));
 	AddDocTemplate(pDocTemplate);
 
 	// Parse command line for standard shell commands, DDE, file open
@@ -141,12 +141,12 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
 // App command to run the dialog
-void CCS580HWApp::OnAppAbout()
+void CCS580FinalProjectApp::OnAppAbout()
 {
 	CAboutDlg aboutDlg;
 	aboutDlg.DoModal();
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CCS580HWApp message handlers
+// CCS580FinalProjectApp message handlers
 

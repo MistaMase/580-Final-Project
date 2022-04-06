@@ -11,11 +11,11 @@
 
 #include "Application.h"
 
-class Application6 : public Application  
+class FinalProjectApplication : public Application  
 {
 public:
-	Application6();
-	virtual ~Application6();
+	FinalProjectApplication();
+	virtual ~FinalProjectApplication();
 	
 	int	Initialize();
 	virtual int Render(); 

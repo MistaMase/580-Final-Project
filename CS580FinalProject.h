@@ -16,13 +16,13 @@
 
 /////////////////////////////////////////////////////////////////////////////
 // CCS580HWApp:
-// See CS580HW.cpp for the implementation of this class
+// See CS580FinalProject.cpp for the implementation of this class
 //
 
-class CCS580HWApp : public CWinApp
+class CCS580FinalProjectApp : public CWinApp
 {
 public:
-	CCS580HWApp();
+	CCS580FinalProjectApp();
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -32,7 +32,7 @@ public:
 	//}}AFX_VIRTUAL
 
 // Implementation
-	//{{AFX_MSG(CCS580HWApp)
+	//{{AFX_MSG(CCS580FinalProjectApp)
 	afx_msg void OnAppAbout();
 		// NOTE - the ClassWizard will add and remove member functions here.
 		//    DO NOT EDIT what you see in these blocks of generated code !
