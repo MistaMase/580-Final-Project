@@ -34,6 +34,7 @@
 #define GZ_DISTRIBUTION_COEFFICIENT	1004	/* specular power of material */
 
 #define	GZ_TEXTURE_MAP			1010	/* pointer to texture routine */
+#define GZ_BUMP_MAP				1011	/* pointer to bump map routine */
 
 /*
  * flags fields for value list attributes
@@ -47,6 +48,7 @@
 typedef int     GzToken;
 typedef void    *GzPointer;
 typedef float   GzColor[3];
+typedef float	GzNormal[3];
 typedef short   GzIntensity;	/* 0 - 4095 in lower 12-bits */
 typedef float   GzCoord[3];
 typedef float   GzTextureIndex[2];
@@ -54,6 +56,7 @@ typedef float   GzMatrix[4][4];
 typedef int	GzDepth;		/* z is signed for clipping */
 
 typedef	int	(*GzTexture)(float u, float v, GzColor color);	/* pointer to texture sampling method */
+typedef int (*GzBump)(float u, float v, GzNormal normal);
 /* u,v parameters [0,1] are defined tex_fun(float u, float v, GzColor color) */
 
 /*

@@ -22,8 +22,9 @@ static char THIS_FILE[]=__FILE__;
 #define OUTFILE "output.ppm"
 
 
-extern int tex_fun(float u, float v, GzColor color); /* image texture function */
-extern int ptex_fun(float u, float v, GzColor color); /* procedural texture function */
+extern int tex_fun(float u, float v, GzColor color);		/* image texture function */
+extern int bump_function(float u, float v, GzNormal normal);	/* Bump map texture function */
+extern int ptex_fun(float u, float v, GzColor color);		/* procedural texture function */
 extern int GzFreeTexture();
 
 void shade(GzCoord norm, GzCoord color);
@@ -120,9 +121,9 @@ GzMatrix	rotateY =
 	status |= m_pRender->GzBeginRender();
 
 	/* Light */
-	GzLight	light1 = { {-0.7071, 0.7071, 0}, {0.5, 0.5, 0.9} };
-	GzLight	light2 = { {0, -0.7071, -0.7071}, {0.9, 0.2, 0.3} };
-	GzLight	light3 = { {0.7071, 0.0, -0.7071}, {0.2, 0.7, 0.3} };
+	GzLight	light1 = { {-0.7071, 0.7071, 0}, {0.5, 0.5, 0.5} };
+	GzLight	light2 = { {0, -0.7071, -0.7071}, {0.5, 0.5, 0.5} };
+	GzLight	light3 = { {0.7071, 0.0, -0.7071}, {0.5, 0.5, 0.5} };
 	GzLight	ambientlight = { {0, 0, 0}, {0.3, 0.3, 0.3} };
 
 	/* Material property */
@@ -172,14 +173,18 @@ GzMatrix	rotateY =
         valueListShader[4] = (GzPointer)&specpower;
 
         nameListShader[5]  = GZ_TEXTURE_MAP;
+
+/* TODO Change This to be nicer */
 #if 0   /* set up null texture function or valid pointer */
 		valueListShader[5] = (GzPointer)(ptex_fun);
 #elif 1
         valueListShader[5] = (GzPointer)(tex_fun);	/* or use ptex_fun */
+		nameListShader[6] = GZ_BUMP_MAP;
+		valueListShader[6] = (GzPointer)(bump_function);
 #else
 		valueListShader[5] = (GzPointer)NULL;
 #endif
-        status |= m_pRender->GzPutAttribute(6, nameListShader, valueListShader);
+        status |= m_pRender->GzPutAttribute(7, nameListShader, valueListShader);
 
 
 	status |= m_pRender->GzPushMatrix(scale);  

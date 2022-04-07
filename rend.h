@@ -19,6 +19,15 @@
 
 #define AAKERNEL_SIZE		6			/* number of samples for anti-aliasing */
 
+
+/* Constants used for lighting/shading modes */
+#define GZ_USE_TEXTURE			(GzToken)(1 << 0)
+#define GZ_USE_FLAT_SHADING		(GzToken)(1 << 1)
+#define GZ_USE_GOURAUD			(GzToken)(1 << 2)
+#define GZ_USE_PHONG			(GzToken)(1 << 3)
+#define GZ_USE_BUMP				(GzToken)(1 << 4)
+
+
 class GzRender{							/* define a renderer */
   
 
@@ -41,6 +50,7 @@ public:
 	GzColor		Ka, Kd, Ks;
 	float		    spec;				/* specular power */
 	GzTexture		tex_fun;			/* tex_fun(float u, float v, GzColor color) */
+	GzBump			bump_function;		/* bump_function(float u, float v, GzNormal normal) */
 
   	// Constructors
 	GzRender(int xRes, int yRes);
@@ -158,6 +168,7 @@ private:
 	int GzPutAttribute_SPECULAR_COEFFICIENT(GzPointer& token);
 	int GzPutAttribute_DISTRIBUTION_COEFFICIENT(GzPointer& token);
 	int GzPutAttribute_TEXTURE_MAP(GzPointer& token);
+	int GzPutAttribute_BUMP_MAP(GzPointer& token);
 
 	// Simple vector and matrix operations
 	// All are safe for in-place operations

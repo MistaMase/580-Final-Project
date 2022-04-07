@@ -754,7 +754,10 @@ int GzRender::GzPutAttribute(int numAttributes, GzToken	*nameList, GzPointer *va
 			status |= GzPutAttribute_DISTRIBUTION_COEFFICIENT(valueList[token_num]);
 		else if (nameList[token_num] == GZ_TEXTURE_MAP)
 			status |= GzPutAttribute_TEXTURE_MAP(valueList[token_num]);
+		else if (nameList[token_num] == GZ_BUMP_MAP)
+			status |= GzPutAttribute_BUMP_MAP(valueList[token_num]);
 		else status |= GZ_FAILURE;
+
 	}
 
 	return status;
@@ -1150,6 +1153,16 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 	matrix_vector_multiply(last_triangle.normals[1], Xnorm[matlevel - 1], shading_normals[1]);
 	matrix_vector_multiply(last_triangle.normals[2], Xnorm[matlevel - 1], shading_normals[2]);
 
+	// Get the screen space vertex positions
+	GzCoord vertex_position_screen_space[3];
+	matrix_vector_multiply(last_triangle.vertices[0], Ximage[matlevel - 1], vertex_position_screen_space[0]);
+	matrix_vector_multiply(last_triangle.vertices[1], Ximage[matlevel - 1], vertex_position_screen_space[1]);
+	matrix_vector_multiply(last_triangle.vertices[2], Ximage[matlevel - 1], vertex_position_screen_space[2]);
+
+	// Compute the perspective-correct texture coordinates
+	GzTextureIndex affine_texture_coordinate;
+	GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x, pixel_y, pixel_z, affine_texture_coordinate);
+
 	// Flat Shading - Compute pixel color using first triangle normal
 	if (interp_mode == GZ_FLAT) {
 		// For flat shading, we specifically want the pre-transformed, pre-sorted first vertex's normal of the triangle to use for lighting. Only when
@@ -1158,7 +1171,7 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 		// Find the triangle color using the first vertex's normal
 		// If we're texturing using flat shading, no we're not 
-		status |= GzComputePixelColor(color, shading_normals[0], NULL, GZ_FLAT);
+		status |= GzComputePixelColor(color, shading_normals[0], NULL, GZ_USE_FLAT_SHADING);
 
 		// Flat shading with no lighting (HW 3)
 		//color[RED] = flatcolor[RED];
@@ -1168,23 +1181,38 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 	// Goroud Shading - Compute pixel color by interpolating vertex colors
 	else if (interp_mode == GZ_COLOR) {
-		// Get the screen space vertex positions
-		GzCoord vertex_position_screen_space[3];
-		matrix_vector_multiply(last_triangle.vertices[0], Ximage[matlevel - 1], vertex_position_screen_space[0]);
-		matrix_vector_multiply(last_triangle.vertices[1], Ximage[matlevel - 1], vertex_position_screen_space[1]);
-		matrix_vector_multiply(last_triangle.vertices[2], Ximage[matlevel - 1], vertex_position_screen_space[2]);
+		// Bump Map
+		GzNormal bump_normals[3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+		if (*bump_function != NULL) {
+			// Get the value at the bump map UV coordinates
+			bump_function(last_triangle.textures[0][U], last_triangle.textures[0][V], bump_normals[0]);
+			bump_function(last_triangle.textures[1][U], last_triangle.textures[1][V], bump_normals[1]);
+			bump_function(last_triangle.textures[2][U], last_triangle.textures[2][V], bump_normals[2]);
+
+			// Offset the shading normals
+			shading_normals[0][X] += bump_normals[0][X];
+			shading_normals[0][Y] += bump_normals[0][Y];
+			shading_normals[0][Z] += bump_normals[0][Z];
+			shading_normals[1][X] += bump_normals[1][X];
+			shading_normals[1][Y] += bump_normals[1][Y];
+			shading_normals[1][Z] += bump_normals[1][Z];
+			shading_normals[2][X] += bump_normals[2][X];
+			shading_normals[2][Y] += bump_normals[2][Y];
+			shading_normals[2][Z] += bump_normals[2][Z];
+
+		}
 
 		// Find the light intensity at each vertex
 		GzColor vertex_light_intensity[3];
 		if (*tex_fun != NULL) {
-			status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, (GZ_TEXTURE_MAP | GZ_COLOR));
-			status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, (GZ_TEXTURE_MAP | GZ_COLOR));
-			status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, (GZ_TEXTURE_MAP | GZ_COLOR));
+			status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, (GZ_USE_TEXTURE | GZ_USE_GOURAUD));
+			status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, (GZ_USE_TEXTURE | GZ_USE_GOURAUD));
+			status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, (GZ_USE_TEXTURE | GZ_USE_GOURAUD));
 		}
 		else {
-			status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, GZ_COLOR);
-			status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, GZ_COLOR);
-			status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, GZ_COLOR);
+			status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, GZ_USE_GOURAUD);
+			status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, GZ_USE_GOURAUD);
+			status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, GZ_USE_GOURAUD);
 		}
 
 		// Interpolate the light intensity values at each vertex
@@ -1197,12 +1225,8 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 		// If we have a texture function, lookup the value
 		if (*tex_fun != NULL) {
-			// Compute the perspective-correct texture coordinates
-			GzTextureIndex affine_texture_coordinate;
-			GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x, pixel_y, pixel_z, affine_texture_coordinate);
-
 			// Get the color value from the texture
-			GzColor texture_color = { 0.0, 0.0 };
+			GzColor texture_color = { 0.0, 0.0, 0.0 };
 			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
 
 			// Multiply the light intensity by the texture color
@@ -1224,11 +1248,31 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 	// Phong Shading - Interpolating vertex normals and compute color using interpolated normal
 	else if (interp_mode == GZ_NORMALS) {
-		// Get the screen space vertex positions
-		GzCoord vertex_position_screen_space[3];
-		matrix_vector_multiply(last_triangle.vertices[0], Ximage[matlevel - 1], vertex_position_screen_space[0]);
-		matrix_vector_multiply(last_triangle.vertices[1], Ximage[matlevel - 1], vertex_position_screen_space[1]);
-		matrix_vector_multiply(last_triangle.vertices[2], Ximage[matlevel - 1], vertex_position_screen_space[2]);
+		// Bump Map
+		GzNormal bump_normals[3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
+		if (*bump_function != NULL) {
+			// Get the value at the bump map UV coordinates
+			bump_function(last_triangle.textures[0][U], last_triangle.textures[0][V], bump_normals[0]);
+			bump_function(last_triangle.textures[1][U], last_triangle.textures[1][V], bump_normals[1]);
+			bump_function(last_triangle.textures[2][U], last_triangle.textures[2][V], bump_normals[2]);
+
+			// Offset the shading normals
+			shading_normals[0][X] += bump_normals[0][X];
+			shading_normals[0][Y] += bump_normals[0][Y];
+			shading_normals[0][Z] += bump_normals[0][Z];
+			shading_normals[1][X] += bump_normals[1][X];
+			shading_normals[1][Y] += bump_normals[1][Y];
+			shading_normals[1][Z] += bump_normals[1][Z];
+			shading_normals[2][X] += bump_normals[2][X];
+			shading_normals[2][Y] += bump_normals[2][Y];
+			shading_normals[2][Z] += bump_normals[2][Z];
+
+		}
+
+		// Renormalize the shading normals
+		normalize(shading_normals[0]);
+		normalize(shading_normals[1]);
+		normalize(shading_normals[2]);
 
 		// Interpolate the normals at each vertex
 		GzCoord interpolated_normal;
@@ -1241,21 +1285,16 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 		// If we have a texture function, lookup the value
 		if (*tex_fun != NULL) {
-			GzTextureIndex affine_texture_coordinate;
-			GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x, pixel_y, pixel_z, affine_texture_coordinate);
-
 			// Get the color from the texture
-			GzColor texture_color = { 0.0, 0.0 };
-			if (tex_fun) {
-				tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
-			}
+			GzColor texture_color = { 0.0, 0.0, 0.0 };
+			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
 
 			// Find the color at the pixel using the interpolated normal
-			status |= GzComputePixelColor(color, interpolated_normal, texture_color, (GZ_TEXTURE_MAP | GZ_NORMALS));
+			status |= GzComputePixelColor(color, interpolated_normal, texture_color, (GZ_USE_TEXTURE | GZ_USE_PHONG));
 		}
 		else {
 			// Find the color at the pixel using the interpolated normal
-			status |= GzComputePixelColor(color, interpolated_normal, NULL, GZ_NORMALS);
+			status |= GzComputePixelColor(color, interpolated_normal, NULL, GZ_USE_PHONG);
 		}
 	}
 
@@ -1271,7 +1310,7 @@ int GzRender::GzComputePixelColor(GzColor& color, GzCoord normal, GzColor textur
 	/* Ambient Lighting */
 	
 	// Phong Lighting and Texturing
-	if (shading_mode == (GZ_TEXTURE_MAP | GZ_NORMALS)) {
+	if (shading_mode == (GZ_USE_TEXTURE | GZ_USE_PHONG)) {
 		// Set Ka to computed texture-lookup value
 		color[RED] = texture_color[RED] * ambientlight.color[RED];
 		color[GREEN] = texture_color[GREEN] * ambientlight.color[GREEN];
@@ -1279,7 +1318,7 @@ int GzRender::GzComputePixelColor(GzColor& color, GzCoord normal, GzColor textur
 	}
 
 	// Gouraud Lighting and Texturing
-	else if (shading_mode == (GZ_TEXTURE_MAP | GZ_COLOR)) {
+	else if (shading_mode == (GZ_USE_TEXTURE | GZ_USE_GOURAUD)) {
 		color[RED] = ambientlight.color[RED];
 		color[GREEN] = ambientlight.color[GREEN];
 		color[BLUE] = ambientlight.color[BLUE];
@@ -1326,14 +1365,14 @@ int GzRender::GzComputePixelColor(GzColor& color, GzCoord normal, GzColor textur
 
 		// Compute diffuse lighting
 		// Phong Lighting and Texturing
-		if (shading_mode == (GZ_TEXTURE_MAP | GZ_NORMALS)) {
+		if (shading_mode == (GZ_USE_TEXTURE | GZ_USE_PHONG)) {
 			color[RED] += texture_color[RED] * lights[light_num].color[RED] * NdotL;
 			color[GREEN] += texture_color[GREEN] * lights[light_num].color[GREEN] * NdotL;
 			color[BLUE] += texture_color[BLUE] * lights[light_num].color[BLUE] * NdotL;
 		}
 
 		// Gouraud Lighting and Texturing
-		else if (shading_mode == (GZ_TEXTURE_MAP | GZ_COLOR)) {
+		else if (shading_mode == (GZ_USE_TEXTURE | GZ_USE_GOURAUD)) {
 			color[RED] += lights[light_num].color[RED] * NdotL;
 			color[GREEN] += lights[light_num].color[GREEN] * NdotL;
 			color[BLUE] += lights[light_num].color[BLUE] * NdotL;
@@ -1367,7 +1406,7 @@ int GzRender::GzComputePixelColor(GzColor& color, GzCoord normal, GzColor textur
 		// Compute specular lighting
 
 		// Gouraud Lighting and Texturing
-		if (shading_mode == (GZ_TEXTURE_MAP | GZ_COLOR)) {
+		if (shading_mode == (GZ_USE_TEXTURE | GZ_USE_GOURAUD)) {
 			color[RED] += lights[light_num].color[RED] * RdotEtoSpecular;
 			color[GREEN] += lights[light_num].color[GREEN] * RdotEtoSpecular;
 			color[BLUE] += lights[light_num].color[BLUE] * RdotEtoSpecular;
@@ -1435,8 +1474,8 @@ void GzRender::GzPerspectiveCorrectInterpolation(GzCoord* vertex_position_screen
 
 	// Convert the texture coordinates back to affine space
 	perspective_distortion = pixel_z / (MAXINT - pixel_z);
-	affine_texture_coordinate[U] = perspective_interpolated_texture_coordinate[U] * (perspective_distortion + 1);
-	affine_texture_coordinate[V] = perspective_interpolated_texture_coordinate[V] * (perspective_distortion + 1);
+	affine_texture_coordinate[U] = perspective_interpolated_texture_coordinate[U] * (perspective_distortion + 1.0f);
+	affine_texture_coordinate[V] = perspective_interpolated_texture_coordinate[V] * (perspective_distortion + 1.0f);
 
 }
 
@@ -1626,6 +1665,13 @@ int GzRender::GzPutAttribute_DISTRIBUTION_COEFFICIENT(GzPointer& token) {
 int GzRender::GzPutAttribute_TEXTURE_MAP(GzPointer& token) {
 	// Parse the generic token
 	tex_fun = (GzTexture)token;
+
+	return GZ_SUCCESS;
+}
+
+int GzRender::GzPutAttribute_BUMP_MAP(GzPointer& token) {
+	// Parse the generic token
+	bump_function = (GzBump)token;
 
 	return GZ_SUCCESS;
 }
