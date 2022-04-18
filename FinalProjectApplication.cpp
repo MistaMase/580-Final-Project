@@ -20,11 +20,14 @@ static char THIS_FILE[]=__FILE__;
 
 #define INFILE  "ppot.asc"
 #define OUTFILE "output.ppm"
+#define PROCEDURAL_TEXTURE	false
+#define TEXTURE_MAP			false
+#define BUMP_MAP			true
 
 
-extern int tex_fun(float u, float v, GzColor color);		/* image texture function */
-extern int bump_function(float u, float v, GzNormal normal);	/* Bump map texture function */
-extern int ptex_fun(float u, float v, GzColor color);		/* procedural texture function */
+extern int tex_fun(float u, float v, GzColor color);											/* image texture function */
+extern int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal);		/* Bump map texture function */
+extern int ptex_fun(float u, float v, GzColor color);											/* procedural texture function */
 extern int GzFreeTexture();
 
 void shade(GzCoord norm, GzCoord color);
@@ -173,17 +176,21 @@ GzMatrix	rotateY =
         valueListShader[4] = (GzPointer)&specpower;
 
         nameListShader[5]  = GZ_TEXTURE_MAP;
-
-/* TODO Change This to be nicer */
-#if 0   /* set up null texture function or valid pointer */
-		valueListShader[5] = (GzPointer)(ptex_fun);
-#elif 1
-        valueListShader[5] = (GzPointer)(tex_fun);	/* or use ptex_fun */
-		nameListShader[6] = GZ_BUMP_MAP;
-		valueListShader[6] = (GzPointer)(bump_function);
-#else
 		valueListShader[5] = (GzPointer)NULL;
+
+#if PROCEDURAL_TEXTURE
+		valueListShader[5] = (GzPointer)ptex_fun
+#elif TEXTURE_MAP
+		valueListShader[5] = (GzPointer)tex_fun;
 #endif
+		
+		nameListShader[6] = GZ_BUMP_MAP;
+		valueListShader[6] = (GzPointer)NULL;
+
+#if BUMP_MAP
+		valueListShader[6] = (GzPointer)bump_function;
+#endif
+
         status |= m_pRender->GzPutAttribute(7, nameListShader, valueListShader);
 
 

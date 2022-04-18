@@ -1163,15 +1163,21 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 	GzTextureIndex affine_texture_coordinate;
 	GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x, pixel_y, pixel_z, affine_texture_coordinate);
 
+	// Define the shading mode variable
+	GzToken shading_mode = 0;
+
 	// Flat Shading - Compute pixel color using first triangle normal
 	if (interp_mode == GZ_FLAT) {
+		// Update shading mode
+		shading_mode |= GZ_USE_FLAT_SHADING;
+
 		// For flat shading, we specifically want the pre-transformed, pre-sorted first vertex's normal of the triangle to use for lighting. Only when
 		// we use this vertex normal will all the lighting match up between triangles. We then transform this normal into image space light the pixel
 		matrix_vector_multiply(last_triangle.flatcolor_vertex_normal, Xnorm[matlevel - 1], shading_normals[0]);
 
 		// Find the triangle color using the first vertex's normal
 		// If we're texturing using flat shading, no we're not 
-		status |= GzComputePixelColor(color, shading_normals[0], NULL, GZ_USE_FLAT_SHADING);
+		status |= GzComputePixelColor(color, shading_normals[0], NULL, shading_mode);
 
 		// Flat shading with no lighting (HW 3)
 		//color[RED] = flatcolor[RED];
@@ -1181,39 +1187,20 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 	// Goroud Shading - Compute pixel color by interpolating vertex colors
 	else if (interp_mode == GZ_COLOR) {
-		// Bump Map
-		GzNormal bump_normals[3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
-		if (*bump_function != NULL) {
-			// Get the value at the bump map UV coordinates
-			bump_function(last_triangle.textures[0][U], last_triangle.textures[0][V], bump_normals[0]);
-			bump_function(last_triangle.textures[1][U], last_triangle.textures[1][V], bump_normals[1]);
-			bump_function(last_triangle.textures[2][U], last_triangle.textures[2][V], bump_normals[2]);
-
-			// Offset the shading normals
-			shading_normals[0][X] += bump_normals[0][X];
-			shading_normals[0][Y] += bump_normals[0][Y];
-			shading_normals[0][Z] += bump_normals[0][Z];
-			shading_normals[1][X] += bump_normals[1][X];
-			shading_normals[1][Y] += bump_normals[1][Y];
-			shading_normals[1][Z] += bump_normals[1][Z];
-			shading_normals[2][X] += bump_normals[2][X];
-			shading_normals[2][Y] += bump_normals[2][Y];
-			shading_normals[2][Z] += bump_normals[2][Z];
-
-		}
+		// Update the shading mode
+		shading_mode |= GZ_USE_GOURAUD;
 
 		// Find the light intensity at each vertex
 		GzColor vertex_light_intensity[3];
 		if (*tex_fun != NULL) {
-			status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, (GZ_USE_TEXTURE | GZ_USE_GOURAUD));
-			status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, (GZ_USE_TEXTURE | GZ_USE_GOURAUD));
-			status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, (GZ_USE_TEXTURE | GZ_USE_GOURAUD));
+			// Update shading mode 
+			shading_mode |= GZ_USE_TEXTURE;
 		}
-		else {
-			status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, GZ_USE_GOURAUD);
-			status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, GZ_USE_GOURAUD);
-			status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, GZ_USE_GOURAUD);
-		}
+
+		// Compute lighting at each vertex
+		status |= GzComputePixelColor(vertex_light_intensity[0], shading_normals[0], NULL, shading_mode);
+		status |= GzComputePixelColor(vertex_light_intensity[1], shading_normals[1], NULL, shading_mode);
+		status |= GzComputePixelColor(vertex_light_intensity[2], shading_normals[2], NULL, shading_mode);
 
 		// Interpolate the light intensity values at each vertex
 		GzCoord vertex_red_channels = { vertex_light_intensity[0][RED], vertex_light_intensity[1][RED], vertex_light_intensity[2][RED] };
@@ -1248,31 +1235,8 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 	// Phong Shading - Interpolating vertex normals and compute color using interpolated normal
 	else if (interp_mode == GZ_NORMALS) {
-		// Bump Map
-		GzNormal bump_normals[3] = { {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0} };
-		if (*bump_function != NULL) {
-			// Get the value at the bump map UV coordinates
-			bump_function(last_triangle.textures[0][U], last_triangle.textures[0][V], bump_normals[0]);
-			bump_function(last_triangle.textures[1][U], last_triangle.textures[1][V], bump_normals[1]);
-			bump_function(last_triangle.textures[2][U], last_triangle.textures[2][V], bump_normals[2]);
-
-			// Offset the shading normals
-			shading_normals[0][X] += bump_normals[0][X];
-			shading_normals[0][Y] += bump_normals[0][Y];
-			shading_normals[0][Z] += bump_normals[0][Z];
-			shading_normals[1][X] += bump_normals[1][X];
-			shading_normals[1][Y] += bump_normals[1][Y];
-			shading_normals[1][Z] += bump_normals[1][Z];
-			shading_normals[2][X] += bump_normals[2][X];
-			shading_normals[2][Y] += bump_normals[2][Y];
-			shading_normals[2][Z] += bump_normals[2][Z];
-
-		}
-
-		// Renormalize the shading normals
-		normalize(shading_normals[0]);
-		normalize(shading_normals[1]);
-		normalize(shading_normals[2]);
+		// Update the shading mode
+		shading_mode |= GZ_USE_PHONG;
 
 		// Interpolate the normals at each vertex
 		GzCoord interpolated_normal;
@@ -1282,20 +1246,32 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 		GzPlanarInterpolate(vertex_position_screen_space, vertex_x_values, (float)pixel_x, (float)pixel_y, interpolated_normal[X]);
 		GzPlanarInterpolate(vertex_position_screen_space, vertex_y_values, (float)pixel_x, (float)pixel_y, interpolated_normal[Y]);
 		GzPlanarInterpolate(vertex_position_screen_space, vertex_z_values, (float)pixel_x, (float)pixel_y, interpolated_normal[Z]);
+		normalize(interpolated_normal);
 
 		// If we have a texture function, lookup the value
-		if (*tex_fun != NULL) {
-			// Get the color from the texture
-			GzColor texture_color = { 0.0, 0.0, 0.0 };
-			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
+		GzColor texture_color = { 0.0f, 0.0f, 0.0f };
 
-			// Find the color at the pixel using the interpolated normal
-			status |= GzComputePixelColor(color, interpolated_normal, texture_color, (GZ_USE_TEXTURE | GZ_USE_PHONG));
+		if (*tex_fun != NULL) {
+			// Update Shading Mode
+			shading_mode |= GZ_USE_TEXTURE;
+
+			// Get the color from the texture
+			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
 		}
-		else {
-			// Find the color at the pixel using the interpolated normal
-			status |= GzComputePixelColor(color, interpolated_normal, NULL, GZ_USE_PHONG);
+		
+		if (*bump_function != NULL) {
+			// Find the normal offset from the bump map
+			GzCoord bump_normal = { 0.0, 0.0, 0.0 };
+			// Get the value at the bump map UV coordinates
+			bump_function(affine_texture_coordinate[U], affine_texture_coordinate[V], interpolated_normal, bump_normal);
+			interpolated_normal[X] = interpolated_normal[X] + bump_normal[X];
+			interpolated_normal[Y] = interpolated_normal[Y] + bump_normal[Y];
+			interpolated_normal[Z] = interpolated_normal[Z] + bump_normal[Z];
+			normalize(interpolated_normal);
 		}
+
+		// Find the color at the pixel using the interpolated normal (possibly with bump offset) and (possibly with texturing)
+		status |= GzComputePixelColor(color, interpolated_normal, texture_color, shading_mode);
 	}
 
 	// Internal error for shading mode
@@ -1674,90 +1650,4 @@ int GzRender::GzPutAttribute_BUMP_MAP(GzPointer& token) {
 	bump_function = (GzBump)token;
 
 	return GZ_SUCCESS;
-}
-
-/* Vector and Matrix Algebra Helper Functions */
-
-void GzRender::identity_matrix(GzMatrix& matrix) {
-	matrix[0][0] = 1.0; 	matrix[0][1] = 0.0; 	matrix[0][2] = 0.0;	matrix[0][3] = 0.0;
-	matrix[1][0] = 0.0; 	matrix[1][1] = 1.0; 	matrix[1][2] = 0.0;	matrix[1][3] = 0.0;
-	matrix[2][0] = 0.0; 	matrix[2][1] = 0.0; 	matrix[2][2] = 1.0;	matrix[2][3] = 0.0;
-	matrix[3][0] = 0.0; 	matrix[3][1] = 0.0; 	matrix[3][2] = 0.0;	matrix[3][3] = 1.0;
-}
-
-float GzRender::dot_product(GzCoord a, GzCoord b) {
-	return (a[X] * b[X] + a[Y] * b[Y] + a[Z] * b[Z]);
-}
-
-void GzRender::dot_product(GzCoord a, GzCoord b, float& dst) {
-	dst = (a[X] * b[X] + a[Y] * b[Y] + a[Z] * b[Z]);
-}
-
-void GzRender::vector_scale(float scale, GzCoord src, GzCoord& dst) {
-	dst[X] = src[X] * scale;
-	dst[Y] = src[Y] * scale;
-	dst[Z] = src[Z] * scale;
-}
-
-void GzRender::vector_subtract(GzCoord a, GzCoord b, GzCoord& dst) {
-	dst[X] = a[X] - b[X];
-	dst[Y] = a[Y] - b[Y];
-	dst[Z] = a[Z] - b[Z];
-}
-
-void GzRender::normalize(GzCoord& src) {
-	float norm = normalization_factor(src);
-	src[X] = src[X] / norm;
-	src[Y] = src[Y] / norm;
-	src[Z] = src[Z] / norm;
-}
-
-float GzRender::normalization_factor(GzCoord& src) {
-	return (float)sqrt(1.0 * src[X] * src[X] + 1.0 * src[Y] * src[Y] + 1.0 * src[Z] * src[Z]);
-}
-
-void GzRender::vector_cross_product(GzCoord a, GzCoord b, GzCoord& dst) {
-	float c, d, e;
-	c = (a[Y] * b[Z] - a[Z] * b[Y]);
-	d = -1.0f * (a[X] * b[Z] - a[Z] * b[X]);
-	e = (a[X] * b[Y] - a[Y] * b[X]);
-	dst[X] = c;
-	dst[Y] = d;
-	dst[Z] = e;
-}
-
-void GzRender::matrix_matrix_multiply(GzMatrix a, GzMatrix b, GzMatrix& dst) {
-	GzMatrix tmp;
-	for (size_t i = 0; i < 4; i++) {
-		for (size_t j = 0; j < 4; j++) {
-			tmp[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j] + a[i][3] * b[3][j];
-		}
-	}
-
-	// Temporary matrix allows for in-place modifications
-	for (size_t i = 0; i < 4; i++) {
-		for (size_t j = 0; j < 4; j++) {
-			dst[i][j] = tmp[i][j];
-		}
-	}
-}
-
-void GzRender::matrix_vector_multiply(GzCoord a, GzMatrix b, GzCoord& dst) {
-	float w = b[3][0] * a[0] + b[3][1] * a[1] + b[3][2] * a[2] + b[3][3];
-	float c = (b[0][0] * a[0] + b[0][1] * a[1] + b[0][2] * a[2] + b[0][3]) / w;
-	float d = (b[1][0] * a[0] + b[1][1] * a[1] + b[1][2] * a[2] + b[1][3]) / w;
-	float e = (b[2][0] * a[0] + b[2][1] * a[1] + b[2][2] * a[2] + b[2][3]) / w;
-	dst[0] = c;
-	dst[1] = d;
-	dst[2] = e;
-}
-
-void GzRender::matrix_vector_multiply_offset(GzCoord a, GzMatrix b, GzCoord& dst, float offset_x, float offset_y) {
-	float w = b[3][0] * a[0] + b[3][1] * a[1] + b[3][2] * a[2] + b[3][3];
-	float c = (b[0][0] * a[0] + b[0][1] * a[1] + b[0][2] * a[2] + b[0][3]) / w;
-	float d = (b[1][0] * a[0] + b[1][1] * a[1] + b[1][2] * a[2] + b[1][3]) / w;
-	float e = (b[2][0] * a[0] + b[2][1] * a[1] + b[2][2] * a[2] + b[2][3]) / w;
-	dst[0] = c + offset_x;
-	dst[1] = d + offset_y;
-	dst[2] = e;
 }

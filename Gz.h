@@ -48,7 +48,6 @@
 typedef int     GzToken;
 typedef void    *GzPointer;
 typedef float   GzColor[3];
-typedef float	GzNormal[3];
 typedef short   GzIntensity;	/* 0 - 4095 in lower 12-bits */
 typedef float   GzCoord[3];
 typedef float   GzTextureIndex[2];
@@ -56,7 +55,7 @@ typedef float   GzMatrix[4][4];
 typedef int	GzDepth;		/* z is signed for clipping */
 
 typedef	int	(*GzTexture)(float u, float v, GzColor color);	/* pointer to texture sampling method */
-typedef int (*GzBump)(float u, float v, GzNormal normal);
+typedef int (*GzBump)(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal);
 /* u,v parameters [0,1] are defined tex_fun(float u, float v, GzColor color) */
 
 /*
@@ -120,3 +119,99 @@ typedef	struct {
 
 #define	MAXXRES	1024	/* put some bounds on size in case of error */
 #define	MAXYRES	1024
+
+/* Vector and Matrix Algebra Helper Functions */
+#ifndef MATRIX_OPS
+#define MATRIX_OPS
+
+inline void identity_matrix(GzMatrix& matrix) {
+	matrix[0][0] = 1.0; 	matrix[0][1] = 0.0; 	matrix[0][2] = 0.0;	matrix[0][3] = 0.0;
+	matrix[1][0] = 0.0; 	matrix[1][1] = 1.0; 	matrix[1][2] = 0.0;	matrix[1][3] = 0.0;
+	matrix[2][0] = 0.0; 	matrix[2][1] = 0.0; 	matrix[2][2] = 1.0;	matrix[2][3] = 0.0;
+	matrix[3][0] = 0.0; 	matrix[3][1] = 0.0; 	matrix[3][2] = 0.0;	matrix[3][3] = 1.0;
+}
+
+inline float dot_product(GzCoord a, GzCoord b) {
+	return (a[X] * b[X] + a[Y] * b[Y] + a[Z] * b[Z]);
+}
+
+inline void dot_product(GzCoord a, GzCoord b, float& dst) {
+	dst = (a[X] * b[X] + a[Y] * b[Y] + a[Z] * b[Z]);
+}
+
+inline void vector_scale(float scale, GzCoord src, GzCoord& dst) {
+	dst[X] = src[X] * scale;
+	dst[Y] = src[Y] * scale;
+	dst[Z] = src[Z] * scale;
+}
+
+inline void vector_add(GzCoord a, GzCoord b, GzCoord& dst) {
+	dst[X] = a[X] + b[X];
+	dst[Y] = a[Y] + b[Y];
+	dst[Z] = a[Z] + b[Z];
+}
+
+inline void vector_subtract(GzCoord a, GzCoord b, GzCoord& dst) {
+	dst[X] = a[X] - b[X];
+	dst[Y] = a[Y] - b[Y];
+	dst[Z] = a[Z] - b[Z];
+}
+
+inline float normalization_factor(GzCoord& src) {
+	return (float)sqrt(1.0 * src[X] * src[X] + 1.0 * src[Y] * src[Y] + 1.0 * src[Z] * src[Z]);
+}
+
+inline void normalize(GzCoord& src) {
+	float norm = normalization_factor(src);
+	src[X] = src[X] / norm;
+	src[Y] = src[Y] / norm;
+	src[Z] = src[Z] / norm;
+}
+
+inline void vector_cross_product(GzCoord a, GzCoord b, GzCoord& dst) {
+	float c, d, e;
+	c = (a[Y] * b[Z] - a[Z] * b[Y]);
+	d = -1.0f * (a[X] * b[Z] - a[Z] * b[X]);
+	e = (a[X] * b[Y] - a[Y] * b[X]);
+	dst[X] = c;
+	dst[Y] = d;
+	dst[Z] = e;
+}
+
+inline void matrix_matrix_multiply(GzMatrix a, GzMatrix b, GzMatrix& dst) {
+	GzMatrix tmp;
+	for (size_t i = 0; i < 4; i++) {
+		for (size_t j = 0; j < 4; j++) {
+			tmp[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j] + a[i][3] * b[3][j];
+		}
+	}
+
+	// Temporary matrix allows for in-place modifications
+	for (size_t i = 0; i < 4; i++) {
+		for (size_t j = 0; j < 4; j++) {
+			dst[i][j] = tmp[i][j];
+		}
+	}
+}
+
+inline void matrix_vector_multiply(GzCoord a, GzMatrix b, GzCoord& dst) {
+	float w = b[3][0] * a[0] + b[3][1] * a[1] + b[3][2] * a[2] + b[3][3];
+	float c = (b[0][0] * a[0] + b[0][1] * a[1] + b[0][2] * a[2] + b[0][3]) / w;
+	float d = (b[1][0] * a[0] + b[1][1] * a[1] + b[1][2] * a[2] + b[1][3]) / w;
+	float e = (b[2][0] * a[0] + b[2][1] * a[1] + b[2][2] * a[2] + b[2][3]) / w;
+	dst[0] = c;
+	dst[1] = d;
+	dst[2] = e;
+}
+
+inline void matrix_vector_multiply_offset(GzCoord a, GzMatrix b, GzCoord& dst, float offset_x, float offset_y) {
+	float w = b[3][0] * a[0] + b[3][1] * a[1] + b[3][2] * a[2] + b[3][3];
+	float c = (b[0][0] * a[0] + b[0][1] * a[1] + b[0][2] * a[2] + b[0][3]) / w;
+	float d = (b[1][0] * a[0] + b[1][1] * a[1] + b[1][2] * a[2] + b[1][3]) / w;
+	float e = (b[2][0] * a[0] + b[2][1] * a[1] + b[2][2] * a[2] + b[2][3]) / w;
+	dst[0] = c + offset_x;
+	dst[1] = d + offset_y;
+	dst[2] = e;
+}
+
+#endif // !MATRIX_OPS

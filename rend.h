@@ -50,7 +50,7 @@ public:
 	GzColor		Ka, Kd, Ks;
 	float		    spec;				/* specular power */
 	GzTexture		tex_fun;			/* tex_fun(float u, float v, GzColor color) */
-	GzBump			bump_function;		/* bump_function(float u, float v, GzNormal normal) */
+	GzBump			bump_function;		/* bump_function(float u, float v, GzCoord given_normal, GzCoord bump_map_normal) */
 
   	// Constructors
 	GzRender(int xRes, int yRes);
@@ -169,20 +169,6 @@ private:
 	int GzPutAttribute_DISTRIBUTION_COEFFICIENT(GzPointer& token);
 	int GzPutAttribute_TEXTURE_MAP(GzPointer& token);
 	int GzPutAttribute_BUMP_MAP(GzPointer& token);
-
-	// Simple vector and matrix operations
-	// All are safe for in-place operations
-	void identity_matrix(GzMatrix& matrix);
-	float dot_product(GzCoord a, GzCoord b);
-	void dot_product(GzCoord a, GzCoord b, float& dst);
-	void vector_scale(float scale, GzCoord src, GzCoord& dst);
-	void vector_subtract(GzCoord a, GzCoord b, GzCoord& dst);
-	void normalize(GzCoord& src);
-	float normalization_factor(GzCoord& src);
-	void vector_cross_product(GzCoord a, GzCoord b, GzCoord& dst);
-	void matrix_matrix_multiply(GzMatrix a, GzMatrix b, GzMatrix& dst);
-	void matrix_vector_multiply(GzCoord a, GzMatrix b, GzCoord& dst);
-	void matrix_vector_multiply_offset(GzCoord a, GzMatrix b, GzCoord& dst, float offset_x, float offset_y);
 };
 
 #endif

@@ -17,7 +17,7 @@ int bump_reset = 1;
 
 // Function prototype
 int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image);
-int GzFiniteDifference(float u, float v, GzNormal& bump_map_normal, int image_size_x, int image_size_y, float* image);
+int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, float* image);
 
 /* Image texture function */
 int tex_fun(float u, float v, GzColor color)
@@ -70,9 +70,8 @@ int tex_fun(float u, float v, GzColor color)
   return status;
 }
 
-/* KEY - This image is a 16-bit depth grayscale image */
 /* Image texture function */
-int bump_function(float u, float v, GzNormal color)
+int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 {
     unsigned char pixel[1];
     unsigned char dummy;
@@ -105,24 +104,24 @@ int bump_function(float u, float v, GzNormal color)
 
     // Invalid texture coordiantes - Set to closest possible valid value
     float new_u = u, new_v = v;
-    /*if (new_u > 1.0) new_u = 1.0;
+    if (new_u > 1.0) new_u = 1.0;
     if (new_u < 0.0) new_u = 0.0;
     if (new_v > 1.0) new_v = 1.0;
-    if (new_v < 0.0) new_v = 0.0;*/
+    if (new_v < 0.0) new_v = 0.0;
 
     // Bilinear interpolation
     int status = GZ_SUCCESS;
-    GzNormal bump_map_normal;
-    status |= GzFiniteDifference(new_u, new_v, bump_map_normal, bump_xs, bump_ys, bump_image);
-    color[X] = bump_map_normal[X];
-    color[Y] = bump_map_normal[Y];
-    color[Z] = bump_map_normal[Z];
+    GzCoord bump_map_normal;
+    status |= computeBumpNormal(new_u, new_v, given_normal, bump_map_normal, bump_xs, bump_ys, bump_image);
+    bump_normal[X] = bump_map_normal[X];
+    bump_normal[Y] = bump_map_normal[Y];
+    bump_normal[Z] = bump_map_normal[Z];
 
     return status;
 }
 
 /* Computes the surface normals of a grayscale texture image */
-int GzFiniteDifference(float u, float v, GzNormal& bump_map_normal, int image_size_x, int image_size_y, float* image) {
+int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, float* image) {
     // Status
     int status = GZ_SUCCESS;
 
@@ -135,23 +134,43 @@ int GzFiniteDifference(float u, float v, GzNormal& bump_map_normal, int image_si
     // Ensure u and v are within range for forward finite difference, otherwise just return 0 so it doesn't offset the normal
     int u_floor = (int)floor(scaled_u);
     int v_floor = (int)floor(scaled_v);
-    if (u_floor + 2 > image_size_x - 1 || v_floor + 2 > image_size_y - 1 || u_floor < 0 || v_floor < 0) {
-        bump_map_normal[X] = 0.0;
-        bump_map_normal[Y] = 0.0;
-        bump_map_normal[Z] = 0.0;
+    if (u_floor + 1 > image_size_x - 1 || v_floor + 1 > image_size_y - 1 || u_floor < 0 || v_floor < 0) {
+        bump_map_normal[X] = given_normal[X];
+        bump_map_normal[Y] = given_normal[Y];
+        bump_map_normal[Z] = given_normal[Z];
         return GZ_FAILURE;
     }
 
-    // Compute the derivatives
-    float dF_dx = image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor];
-    float dF_dy = image[(v_floor + 1) * image_size_x + u_floor] - image[v_floor * image_size_x + u_floor];
-    float dF2_dx = (image[v_floor * image_size_x + u_floor + 2] - image[v_floor * image_size_x + u_floor + 1]) - dF_dx;
-    float dF2_dy = (image[(v_floor + 2) * image_size_x + u_floor] - image[(v_floor + 1) * image_size_x + u_floor]) - dF_dy;
+    // Displace the given normal
+    //GzCoord 
+    GzCoord gvn_normal;
+    vector_scale(1.0, given_normal, gvn_normal);
 
-    // Save the normals
-    bump_map_normal[X] = (-1.0 * dF_dx) / sqrt((double)dF2_dx * dF2_dx + (double)dF2_dy * dF2_dy + 1);
-    bump_map_normal[Y] = (-1.0 * dF_dy) / sqrt((double)dF2_dx * dF2_dx + (double)dF2_dy * dF2_dy + 1);
-    bump_map_normal[Z] = 1.0 / sqrt((double)dF2_dx * dF2_dx + (double)dF2_dy * dF2_dy + 1);
+    // Define the surface coordinate space
+    GzCoord tangent = { 0.0, 1.0, 0.0 };
+    GzCoord binormal;
+    GzCoord projected_normal;
+    vector_scale(dot_product(tangent, given_normal), given_normal, projected_normal);
+    vector_subtract(tangent, projected_normal, tangent);
+    normalize(tangent);
+    vector_cross_product(tangent, given_normal, binormal);
+    normalize(binormal);
+
+    // Compute derivative in u and v directions from the bump map
+    float surface_u = (image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor]) / 1.0f;
+    float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[v_floor * image_size_x + u_floor]) / 1.0f;
+
+    // Apply the bump offset
+    GzCoord a, b, c, d, e;
+    //vector_cross_product(tangent, given_normal, a);
+    //vector_scale(surface_u, a, b);
+    vector_scale(surface_u, binormal, b);
+    vector_cross_product(binormal, given_normal, c);
+    vector_scale(surface_v, c, d);
+    vector_add(b, d, e);
+    //normalize(vector)
+    //vector_add(given_normal, e, bump_map_normal);
+    normalize(bump_map_normal);
 
     return status;
 }
@@ -301,4 +320,3 @@ int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int i
 
     return GZ_SUCCESS;
 }
-
