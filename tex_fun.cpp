@@ -162,6 +162,7 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
     // Compute derivative in u and v directions from the bump map
     float surface_u = (image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor]) / 1.0f;
     float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[v_floor * image_size_x + u_floor]) / 1.0f;
+    
 
     // Apply the bump offset
     GzCoord a, b, c, d, e;
