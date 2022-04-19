@@ -17,8 +17,8 @@
 #define	MATLEVELS			100			/* how many matrix pushes allowed */
 #define	MAX_LIGHTS			10			/* how many lights allowed */
 
-#define AAKERNEL_SIZE		6			/* number of samples for anti-aliasing */
-
+//#define AAKERNEL_SIZE		6			/* number of samples for anti-aliasing */
+#define AAKERNEL_SIZE		1
 
 /* Constants used for lighting/shading modes */
 #define GZ_USE_TEXTURE			(GzToken)(1 << 0)
@@ -90,10 +90,11 @@ public:
 // Added additional helper methods for lighting and shading
 private:
 	// Antialiasing kernel weights and offsets
-	float AAFilter[AAKERNEL_SIZE][3] = {
+	/*float AAFilter[AAKERNEL_SIZE][3] = {
 		-0.52f,  0.38f, 0.128f,		0.41f,  0.56f, 0.119f,		0.27f,   0.08f, 0.294f,
 		-0.17f, -0.29f, 0.249f,		0.58f, -0.55f, 0.104f,		-0.31f, -0.71f, 0.106f
-	};
+	};*/
+	float AAFilter[AAKERNEL_SIZE][3] = { 0.0f, 0.0f, 1.0f };
 
 	// Scanline algorithm vertical structure
 	typedef struct {
