@@ -843,11 +843,6 @@ int GzRender::GzPutTriangle(int numParts, GzToken *nameList, GzPointer *valueLis
 			last_triangle.flatcolor_vertex_normal[0] = normals[0][X];
 			last_triangle.flatcolor_vertex_normal[1] = normals[0][Y];
 			last_triangle.flatcolor_vertex_normal[2] = normals[0][Z];
-
-			// Render here since no texture function was given
-			if (*tex_fun == NULL) {
-				GzRenderTriangle();
-			}
 		}
 
 		// Triangle UV Index - Calls the renderer as now we have a vertex, normal, and a uv index
@@ -1260,14 +1255,44 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 		}
 		
 		if (*bump_function != NULL) {
+			// Compute the BNT transformation
+			GzTextureIndex delta_UV1 = { last_triangle.textures[1][U] - last_triangle.textures[0][U], last_triangle.textures[1][V] - last_triangle.textures[0][V] };
+			GzTextureIndex delta_UV2 = { last_triangle.textures[2][U] - last_triangle.textures[1][U], last_triangle.textures[2][V] - last_triangle.textures[1][V] };
+			GzCoord edge1, edge2;
+			vector_subtract(last_triangle.vertices[1], last_triangle.vertices[0], edge1);
+			vector_subtract(last_triangle.vertices[2], last_triangle.vertices[1], edge2);
+			float normalization_factor = 1.0f / (delta_UV1[X] * delta_UV2[Y] - delta_UV2[X] * delta_UV1[Y]);
+			GzCoord tangent = { delta_UV2[Y] * edge1[X] - delta_UV1[Y] * edge2[X],
+								delta_UV2[Y] * edge1[Y] - delta_UV1[Y] * edge2[Y],
+								delta_UV2[Y] * edge1[Z] - delta_UV1[Y] * edge2[Z] };
+			normalize(tangent);
+			GzCoord binormal = { -1.0f * delta_UV2[X] * edge1[X] + delta_UV1[X] * edge2[X],
+								 -1.0f * delta_UV2[X] * edge1[Y] + delta_UV1[X] * edge2[Y],
+								 -1.0f * delta_UV2[X] * edge1[Z] + delta_UV1[X] * edge2[Z] };
+			normalize(binormal);
+			GzMatrix Xst = { { tangent[X], tangent[Y], tangent[Z]},
+							 { binormal[X], binormal[Y], binormal[Z]},
+							 { interpolated_normal[X], interpolated_normal[Y], interpolated_normal[Z]} };
+			GzMatrix Xts = { { tangent[X], binormal[X], interpolated_normal[X] },
+							 { tangent[Y], binormal[Y], interpolated_normal[Y] },
+							 { tangent[Z], binormal[Z], interpolated_normal[Z] } };
+
+			// Transform normal from shading space to tangent space
+			GzCoord given_normal_tangent_space;
+			matrix_vector_multiply_3d(interpolated_normal, Xst, given_normal_tangent_space);
+			normalize(given_normal_tangent_space);
+
 			// Find the normal offset from the bump map
-			GzCoord bump_normal = { 0.0, 0.0, 0.0 };
-			// Get the value at the bump map UV coordinates
-			bump_function(affine_texture_coordinate[U], affine_texture_coordinate[V], interpolated_normal, bump_normal);
-			interpolated_normal[X] = interpolated_normal[X] + bump_normal[X];
-			interpolated_normal[Y] = interpolated_normal[Y] + bump_normal[Y];
-			interpolated_normal[Z] = interpolated_normal[Z] + bump_normal[Z];
-			normalize(interpolated_normal);
+			GzCoord bump_normal_tangent_space;
+			bump_function(affine_texture_coordinate[U], affine_texture_coordinate[V], given_normal_tangent_space, bump_normal_tangent_space);
+
+			// Convert normal back to shading space
+			GzCoord x;
+			matrix_vector_multiply_3d(bump_normal_tangent_space, Xts, x);
+			normalize(x);
+			vector_scale(1.0f, x, interpolated_normal);
+
+			int z = 5;
 		}
 
 		// Find the color at the pixel using the interpolated normal (possibly with bump offset) and (possibly with texturing)

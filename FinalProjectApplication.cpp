@@ -19,10 +19,10 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 #define INFILE				"ppot.asc"
-#define TEXTURE_NAME		"rock"		// Only used for outputting the correctly named file
+#define TEXTURE_NAME		"pebbles"		// Only used for outputting the correctly named file
 #define PROCEDURAL_TEXTURE	false
-#define TEXTURE_MAP			false
-#define BUMP_MAP			true
+#define TEXTURE_MAP			true
+#define BUMP_MAP			false
 
 
 extern int tex_fun(float u, float v, GzColor color);											/* image texture function */

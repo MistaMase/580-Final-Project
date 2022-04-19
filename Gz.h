@@ -204,6 +204,15 @@ inline void matrix_vector_multiply(GzCoord a, GzMatrix b, GzCoord& dst) {
 	dst[2] = e;
 }
 
+inline void matrix_vector_multiply_3d(GzCoord a, GzMatrix b, GzCoord& dst) {
+	float c = (b[0][0] * a[0] + b[0][1] * a[1] + b[0][2] * a[2]);
+	float d = (b[1][0] * a[0] + b[1][1] * a[1] + b[1][2] * a[2]);
+	float e = (b[2][0] * a[0] + b[2][1] * a[1] + b[2][2] * a[2]);
+	dst[0] = c;
+	dst[1] = d;
+	dst[2] = e;
+}
+
 inline void matrix_vector_multiply_offset(GzCoord a, GzMatrix b, GzCoord& dst, float offset_x, float offset_y) {
 	float w = b[3][0] * a[0] + b[3][1] * a[1] + b[3][2] * a[2] + b[3][3];
 	float c = (b[0][0] * a[0] + b[0][1] * a[1] + b[0][2] * a[2] + b[0][3]) / w;

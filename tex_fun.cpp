@@ -5,18 +5,20 @@
 
 #define FRACTAL_DEPTH 8
 #define ASSETS_FOLDER		"assets"        // Selects this folder from the main project
-#define BASE_TEXTURE_NAME	"rock"       // Dynamically selects this folder from assets. Change this for different assets
+#define BASE_TEXTURE_NAME	"pebbles"       // Dynamically selects this folder from assets. Change this for different assets
+#define BUMP_STRENGTH       1.0f
 
 GzColor	*texture_image = NULL;
-float* bump_image = NULL;
+//float* bump_image = NULL;
+GzColor* bump_image = NULL;
 int texture_xs, texture_ys;
 int bump_xs, bump_ys;
 int texture_reset = 1;
 int bump_reset = 1;
 
 // Function prototype
-int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image);
-int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, float* image);
+int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image, int num_dimensions);
+int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, /*float* */ GzColor* image);
 
 /* Image texture function */
 int tex_fun(float u, float v, GzColor color)
@@ -63,7 +65,7 @@ int tex_fun(float u, float v, GzColor color)
   // Bilinear interpolation
   int status = GZ_SUCCESS;
   GzColor interpolated_color;
-  status |= GzBilinearInterpolation(new_u, new_v, interpolated_color, texture_xs, texture_ys, texture_image);
+  status |= GzBilinearInterpolation(new_u, new_v, interpolated_color, texture_xs, texture_ys, texture_image, 3);
   color[RED] = interpolated_color[RED];
   color[GREEN] = interpolated_color[GREEN];
   color[BLUE] = interpolated_color[BLUE];
@@ -74,7 +76,7 @@ int tex_fun(float u, float v, GzColor color)
 /* Image texture function */
 int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 {
-    unsigned char pixel[1];
+    unsigned char pixel[3];
     unsigned char dummy;
     char foo[8];
     int i;
@@ -82,14 +84,16 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 
     if (bump_reset) {          /* open and load texture file */
         char asset_location[50];
-        sprintf(asset_location, "%s\\%s\\%s_bump.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
+        //sprintf(asset_location, "%s\\%s\\%s_bump.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
+        sprintf(asset_location, "%s\\%s\\%s_normal.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
         fd = fopen(asset_location, "rb");
         if (fd == NULL) {
             fprintf(stderr, "texture file not found\n");
             exit(-1);
         }
         fscanf(fd, "%s %d %d %c", foo, &bump_xs, &bump_ys, &dummy);
-        bump_image = (float*)malloc(sizeof(float) * (bump_xs + 1) * (bump_ys + 1));
+        //bump_image = (float*)malloc(sizeof(float) * (bump_xs + 1) * (bump_ys + 1));
+        bump_image = (GzColor*)malloc(sizeof(GzColor) * (bump_xs + 1) * (bump_ys + 1));
         if (bump_image == NULL) {
             fprintf(stderr, "malloc for texture image failed\n");
             exit(-1);
@@ -97,8 +101,12 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 
         // TODO Double Check This
         for (i = 0; i < bump_xs * bump_ys; i++) {	/* create array of GzColor values */
-            fread(pixel, sizeof(unsigned char), 1, fd);
-            bump_image[i] = (float)((int)pixel[0]) * (1.0f / (pow(2, 8) - 1.0f));
+            /*fread(pixel, sizeof(unsigned char), 1, fd);
+            bump_image[i] = (float)((int)pixel[0]) * (1.0f / 255.0f);*/
+            fread(pixel, sizeof(pixel), 1, fd);
+            bump_image[i][X] = (float)((int)pixel[X]) * (1.0f / 255.0f);
+            bump_image[i][Y] = (float)((int)pixel[Y]) * (1.0f / 255.0f);
+            bump_image[i][Z] = (float)((int)pixel[Z]) * (1.0f / 255.0f);
         }
 
         bump_reset = 0;          /* init is done */
@@ -124,7 +132,7 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 }
 
 /* Computes the surface normals of a grayscale texture image */
-int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, float* image) {
+int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, /*float* */ GzColor* image) {
     // Status
     int status = GZ_SUCCESS;
 
@@ -137,7 +145,7 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
     // Ensure u and v are within range for forward finite difference, otherwise just return 0 so it doesn't offset the normal
     int u_floor = (int)floor(scaled_u);
     int v_floor = (int)floor(scaled_v);
-    if (u_floor + 1 > image_size_x - 1 || v_floor + 1 > image_size_y - 1 || u_floor < 0 || v_floor < 0) {
+    if (u_floor + 1 > image_size_x - 1 || v_floor + 1 > image_size_y - 1 || u_floor - 1 < 0 || v_floor - 1 < 0) {
         bump_map_normal[X] = given_normal[X];
         bump_map_normal[Y] = given_normal[Y];
         bump_map_normal[Z] = given_normal[Z];
@@ -147,30 +155,28 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
     GzCoord gvn_normal;
     vector_scale(1.0, given_normal, gvn_normal);
 
-    // Define the surface coordinate space
-    GzCoord tangent = { 0.0, 1.0, 0.0 };
-    GzCoord binormal;
-    GzCoord projected_normal;
-    vector_scale(dot_product(tangent, given_normal), given_normal, projected_normal);
-    vector_subtract(tangent, projected_normal, tangent);
-    normalize(tangent);
-    vector_cross_product(tangent, given_normal, binormal);
-    normalize(binormal);
-
-
-
     // Compute derivative in u and v directions from the bump map
-    float surface_u = (image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor]) / 1.0f;
-    float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[v_floor * image_size_x + u_floor]) / 1.0f;
-    
+   /* float f0 = image[v_floor * image_size_x + u_floor - 1];
+    float f1 = image[v_floor * image_size_x + u_floor + 1];
+    float f2 = image[(v_floor + 1) * image_size_x + u_floor];
+    float f3 = image[(v_floor - 1) * image_size_x + u_floor];
+    float surface_u = (image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor]) * (BUMP_STRENGTH / 2.0f);
+    float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[(v_floor - 1) * image_size_x + u_floor]) * (BUMP_STRENGTH / 2.0f);*/
 
-    // Apply the bump offset
-    GzCoord a, b, c, d, e;
-    vector_scale(surface_u, tangent, b);
-    vector_scale(surface_v, binormal, d);
-    vector_add(b, d, e);
-    vector_add(given_normal, e, bump_map_normal);
-    //normalize(bump_map_normal);
+    // Add the offset in the U and V direction
+    /*bump_map_normal[U] = given_normal[X] + surface_u;
+    bump_map_normal[V] = given_normal[Y] + surface_v;
+    bump_map_normal[Z] = given_normal[Z];*/
+
+    // Normal Mapping?
+    GzCoord normal_vector;
+    GzBilinearInterpolation(u, v, normal_vector, image_size_x, image_size_y, bump_image, 3);
+    normal_vector[Z] = 2.0f * (normal_vector[Z] - 0.5f);
+    vector_scale(BUMP_STRENGTH, normal_vector, normal_vector);
+    vector_add(given_normal, normal_vector, bump_map_normal);
+    normalize(bump_map_normal);
+
+
 
     return status;
 }
@@ -289,7 +295,7 @@ int GzFreeTexture()
 	return GZ_SUCCESS;
 }
 
-int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image) {
+int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image, int num_dimensions) {
     // Scale to size of texture
     float scaled_u = u * (image_size_x - 1);
     float scaled_v = v * (image_size_y - 1);
@@ -303,20 +309,12 @@ int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int i
     // Bilinear interpolation based on floor and ceil of u and v
     float s_value = scaled_u - u_floor;
     float t_value = scaled_v - v_floor;
-    interpolated_color[RED] =   s_value          * t_value           * image[image_size_x * v_ceil + u_ceil][RED] +
-                                (1.0f - s_value) * t_value           * image[image_size_x * v_ceil + u_floor][RED] + 
-                                s_value          * (1.0f - t_value)   * image[image_size_x * v_floor + u_ceil][RED] +
-                                (1.0f - s_value) * (1.0f - t_value)   * image[image_size_x * v_floor + u_floor][RED];
-
-    interpolated_color[GREEN] = s_value          * t_value           * image[image_size_x * v_ceil + u_ceil][GREEN] +
-                                (1.0f - s_value) * t_value           * image[image_size_x * v_ceil + u_floor][GREEN] +
-                                s_value          * (1.0f - t_value)   * image[image_size_x * v_floor + u_ceil][GREEN] +
-                                (1.0f - s_value) * (1.0f - t_value)   * image[image_size_x * v_floor + u_floor][GREEN];
-
-    interpolated_color[BLUE] =  s_value          * t_value           * image[image_size_x * v_ceil + u_ceil][BLUE] +
-                                (1.0f - s_value) * t_value           * image[image_size_x * v_ceil + u_floor][BLUE] +
-                                s_value          * (1.0f - t_value)   * image[image_size_x * v_floor + u_ceil][BLUE] +
-                                (1.0f - s_value) * (1.0f - t_value)   * image[image_size_x * v_floor + u_floor][BLUE];
+    for (int d = 0; d < num_dimensions; d++) {
+        interpolated_color[d] = s_value          * t_value           * image[image_size_x * v_ceil + u_ceil][d] +
+                                (1.0f - s_value) * t_value           * image[image_size_x * v_ceil + u_floor][d] + 
+                                s_value          * (1.0f - t_value)  * image[image_size_x * v_floor + u_ceil][d] +
+                                (1.0f - s_value) * (1.0f - t_value)  * image[image_size_x * v_floor + u_floor][d];
+    }
 
     return GZ_SUCCESS;
 }
