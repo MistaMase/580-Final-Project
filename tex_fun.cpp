@@ -4,9 +4,8 @@
 #include	"Gz.h"
 
 #define FRACTAL_DEPTH 8
-
-#define TEXTURE_NAME "pebbles_texture.ppm"
-#define BUMP_TEXTURE_NAME "pebbles_bump.ppm"
+#define ASSETS_FOLDER		"assets"        // Selects this folder from the main project
+#define BASE_TEXTURE_NAME	"rock"       // Dynamically selects this folder from assets. Change this for different assets
 
 GzColor	*texture_image = NULL;
 float* bump_image = NULL;
@@ -29,7 +28,9 @@ int tex_fun(float u, float v, GzColor color)
   FILE			*fd;
 
   if (texture_reset) {          /* open and load texture file */
-    fd = fopen (TEXTURE_NAME, "rb");
+    char asset_location[50];
+    sprintf(asset_location, "%s\\%s\\%s_texture.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
+    fd = fopen (asset_location, "rb");
     if (fd == NULL) {
       fprintf (stderr, "texture file not found\n");
       exit(-1);
@@ -80,7 +81,9 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
     FILE* fd;
 
     if (bump_reset) {          /* open and load texture file */
-        fd = fopen(BUMP_TEXTURE_NAME, "rb");
+        char asset_location[50];
+        sprintf(asset_location, "%s\\%s\\%s_bump.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
+        fd = fopen(asset_location, "rb");
         if (fd == NULL) {
             fprintf(stderr, "texture file not found\n");
             exit(-1);
@@ -141,8 +144,6 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
         return GZ_FAILURE;
     }
 
-    // Displace the given normal
-    //GzCoord 
     GzCoord gvn_normal;
     vector_scale(1.0, given_normal, gvn_normal);
 
@@ -156,21 +157,19 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
     vector_cross_product(tangent, given_normal, binormal);
     normalize(binormal);
 
+
+
     // Compute derivative in u and v directions from the bump map
     float surface_u = (image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor]) / 1.0f;
     float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[v_floor * image_size_x + u_floor]) / 1.0f;
 
     // Apply the bump offset
     GzCoord a, b, c, d, e;
-    //vector_cross_product(tangent, given_normal, a);
-    //vector_scale(surface_u, a, b);
-    vector_scale(surface_u, binormal, b);
-    vector_cross_product(binormal, given_normal, c);
-    vector_scale(surface_v, c, d);
+    vector_scale(surface_u, tangent, b);
+    vector_scale(surface_v, binormal, d);
     vector_add(b, d, e);
-    //normalize(vector)
-    //vector_add(given_normal, e, bump_map_normal);
-    normalize(bump_map_normal);
+    vector_add(given_normal, e, bump_map_normal);
+    //normalize(bump_map_normal);
 
     return status;
 }

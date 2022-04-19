@@ -5,6 +5,16 @@ VisualStudioVersion = 16.0.32106.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CS580FinalProject", "CS580FinalProject.vcxproj", "{F3ED20D0-7ADC-4244-AD3E-7DF9439043AC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{91A67C0B-3456-4364-849F-D0AE00D45D1C}"
+	ProjectSection(SolutionItems) = preProject
+		assets\earth\earth_bump.jpg = assets\earth\earth_bump.jpg
+		assets\earth\earth_bump.ppm = assets\earth\earth_bump.ppm
+		assets\earth\earth_texture.jpg = assets\earth\earth_texture.jpg
+		assets\earth\earth_texture.ppm = assets\earth\earth_texture.ppm
+		assets\pebbles\pebbles_bump.ppm = assets\pebbles\pebbles_bump.ppm
+		assets\pebbles\pebbles_texture.ppm = assets\pebbles\pebbles_texture.ppm
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86

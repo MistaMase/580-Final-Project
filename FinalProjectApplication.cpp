@@ -18,8 +18,8 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#define INFILE  "ppot.asc"
-#define OUTFILE "output.ppm"
+#define INFILE				"ppot.asc"
+#define TEXTURE_NAME		"rock"		// Only used for outputting the correctly named file
 #define PROCEDURAL_TEXTURE	false
 #define TEXTURE_MAP			false
 #define BUMP_MAP			true
@@ -236,7 +236,9 @@ int FinalProjectApplication::Render()
 	}
 
 	FILE *outfile;
-	if( (outfile  = fopen( OUTFILE , "wb" )) == NULL )
+	char outfile_name[50];
+	sprintf(outfile_name, "%s%s%s_output.ppm", TEXTURE_NAME, (PROCEDURAL_TEXTURE || TEXTURE_MAP) ? "_texture" : "", BUMP_MAP ? "_bump" : "");
+	if( (outfile  = fopen( outfile_name , "wb" )) == NULL )
 	{
          AfxMessageBox( "The output file was not opened\n" );
 		 return GZ_FAILURE;
