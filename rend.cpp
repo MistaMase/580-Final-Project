@@ -902,6 +902,7 @@ int GzRender::GzRenderTriangle() {
 		// Skip this triangle if any triangle has negative screen-z vertex
 		if (transformed_vertices[0][Z] < 0 || transformed_vertices[1][Z] < 0 || transformed_vertices[2][Z] < 0) continue;
 
+		// Rasterize
 		status |= GzRasterizeTriangle(transformed_vertices, aa_num);
 	}
 
@@ -1027,7 +1028,7 @@ int GzRender::GzRasterizeTriangle(GzCoord transformed_vertices[3], int aa_num) {
 	// Right Triangle
 	else if (transformed_vertices[1][X] > edge_check) on_left = false;
 
-	// Left Triangle1
+	// Left Triangle
 	else on_left = true;
 
 	// Set up DDA for top half Y values
@@ -1181,6 +1182,7 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 	}
 
 	// Goroud Shading - Compute pixel color by interpolating vertex colors
+	// TODO This has not been update for Bump Mapping
 	else if (interp_mode == GZ_COLOR) {
 		// Update the shading mode
 		shading_mode |= GZ_USE_GOURAUD;
@@ -1270,9 +1272,13 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 								 -1.0f * delta_UV2[X] * edge1[Y] + delta_UV1[X] * edge2[Y],
 								 -1.0f * delta_UV2[X] * edge1[Z] + delta_UV1[X] * edge2[Z] };
 			normalize(binormal);
+
+			// Transformation matrix from shading space to tangent space
 			GzMatrix Xst = { { tangent[X], tangent[Y], tangent[Z]},
 							 { binormal[X], binormal[Y], binormal[Z]},
 							 { interpolated_normal[X], interpolated_normal[Y], interpolated_normal[Z]} };
+
+			// Transformation matrix from tangent space to shading space
 			GzMatrix Xts = { { tangent[X], binormal[X], interpolated_normal[X] },
 							 { tangent[Y], binormal[Y], interpolated_normal[Y] },
 							 { tangent[Z], binormal[Z], interpolated_normal[Z] } };
@@ -1288,11 +1294,8 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 
 			// Convert normal back to shading space
 			GzCoord x;
-			matrix_vector_multiply_3d(bump_normal_tangent_space, Xts, x);
-			normalize(x);
-			vector_scale(1.0f, x, interpolated_normal);
-
-			int z = 5;
+			matrix_vector_multiply_3d(bump_normal_tangent_space, Xts, interpolated_normal);
+			normalize(interpolated_normal);
 		}
 
 		// Find the color at the pixel using the interpolated normal (possibly with bump offset) and (possibly with texturing)

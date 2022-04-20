@@ -3,7 +3,7 @@
 #include	"stdio.h"
 #include	"Gz.h"
 
-#define FRACTAL_DEPTH 8
+#define FRACTAL_DEPTH       8
 #define ASSETS_FOLDER		"assets"        // Selects this folder from the main project
 #define BASE_TEXTURE_NAME	"pebbles"       // Dynamically selects this folder from assets. Change this for different assets
 #define BUMP_STRENGTH       1.0f
@@ -37,7 +37,7 @@ int tex_fun(float u, float v, GzColor color)
       fprintf (stderr, "texture file not found\n");
       exit(-1);
     }
-    fscanf (fd, "%s %d %d %c", foo, &texture_xs, &texture_ys, &dummy);
+    fscanf(fd, "%s %d %d %c", foo, &texture_xs, &texture_ys, &dummy);
     texture_image = (GzColor*)malloc(sizeof(GzColor)*(texture_xs+1)*(texture_ys+1));
     if (texture_image == NULL) {
       fprintf (stderr, "malloc for texture image failed\n");
@@ -99,7 +99,6 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
             exit(-1);
         }
 
-        // TODO Double Check This
         for (i = 0; i < bump_xs * bump_ys; i++) {	/* create array of GzColor values */
             /*fread(pixel, sizeof(unsigned char), 1, fd);
             bump_image[i] = (float)((int)pixel[0]) * (1.0f / 255.0f);*/
@@ -113,17 +112,10 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
         fclose(fd);
     }
 
-    // Invalid texture coordiantes - Set to closest possible valid value
-    float new_u = u, new_v = v;
-    if (new_u > 1.0) new_u = 1.0;
-    if (new_u < 0.0) new_u = 0.0;
-    if (new_v > 1.0) new_v = 1.0;
-    if (new_v < 0.0) new_v = 0.0;
-
-    // Bilinear interpolation
+    // Compute the new normal from the normal map
     int status = GZ_SUCCESS;
     GzCoord bump_map_normal;
-    status |= computeBumpNormal(new_u, new_v, given_normal, bump_map_normal, bump_xs, bump_ys, bump_image);
+    status |= computeBumpNormal(u, v, given_normal, bump_map_normal, bump_xs, bump_ys, bump_image);
     bump_normal[X] = bump_map_normal[X];
     bump_normal[Y] = bump_map_normal[Y];
     bump_normal[Z] = bump_map_normal[Z];
@@ -131,7 +123,7 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
     return status;
 }
 
-/* Computes the surface normals of a grayscale texture image */
+/* Computes the surface normals of a normal texture image */
 int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, /*float* */ GzColor* image) {
     // Status
     int status = GZ_SUCCESS;
@@ -140,9 +132,7 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
     float scaled_u = u * (image_size_x - 1);
     float scaled_v = v * (image_size_y - 1);
 
-    // TODO Maybe make bump mapping work on the edges?
-    // TODO Interpolate to pixel center and don't rely on the floor
-    // Ensure u and v are within range for forward finite difference, otherwise just return 0 so it doesn't offset the normal
+    // Ensure u and v are within range for forward finite difference, otherwise just return the current normal so it doesn't offset the normal
     int u_floor = (int)floor(scaled_u);
     int v_floor = (int)floor(scaled_v);
     if (u_floor + 1 > image_size_x - 1 || v_floor + 1 > image_size_y - 1 || u_floor - 1 < 0 || v_floor - 1 < 0) {
@@ -152,9 +142,7 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
         return GZ_FAILURE;
     }
 
-    GzCoord gvn_normal;
-    vector_scale(1.0, given_normal, gvn_normal);
-
+    // TODO Used for heightmap-style bump maps. Idk if it works from the looks of resulting texture but the math looks right
     // Compute derivative in u and v directions from the bump map
    /* float f0 = image[v_floor * image_size_x + u_floor - 1];
     float f1 = image[v_floor * image_size_x + u_floor + 1];
@@ -168,15 +156,17 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
     bump_map_normal[V] = given_normal[Y] + surface_v;
     bump_map_normal[Z] = given_normal[Z];*/
 
-    // Normal Mapping?
+    // Normal Mapping
     GzCoord normal_vector;
     GzBilinearInterpolation(u, v, normal_vector, image_size_x, image_size_y, bump_image, 3);
+
+    // Deal with Z being in range of [-1, 1]
     normal_vector[Z] = 2.0f * (normal_vector[Z] - 0.5f);
+
+    // Scale by the BUMP STRENGTH, for normal mapping this should probably be 1
     vector_scale(BUMP_STRENGTH, normal_vector, normal_vector);
     vector_add(given_normal, normal_vector, bump_map_normal);
     normalize(bump_map_normal);
-
-
 
     return status;
 }

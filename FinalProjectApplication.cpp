@@ -23,6 +23,7 @@ static char THIS_FILE[]=__FILE__;
 #define PROCEDURAL_TEXTURE	false
 #define TEXTURE_MAP			false
 #define BUMP_MAP			true
+#define PHONG_SHADING		true			// This should always be left true for bump mapping
 
 
 extern int tex_fun(float u, float v, GzColor color);											/* image texture function */
@@ -138,60 +139,63 @@ GzMatrix	rotateY =
   renderer is ready for frame --- define lights and shader at start of frame 
 */
 
-        /*
-         * Tokens associated with light parameters
-         */
-        nameListLights[0] = GZ_DIRECTIONAL_LIGHT;
-        valueListLights[0] = (GzPointer)&light1;
-        nameListLights[1] = GZ_DIRECTIONAL_LIGHT;
-        valueListLights[1] = (GzPointer)&light2;
-        nameListLights[2] = GZ_DIRECTIONAL_LIGHT;
-        valueListLights[2] = (GzPointer)&light3;
-        status |= m_pRender->GzPutAttribute(3, nameListLights, valueListLights);
+    /*
+    * Tokens associated with light parameters
+    */
+    nameListLights[0] = GZ_DIRECTIONAL_LIGHT;
+    valueListLights[0] = (GzPointer)&light1;
+    nameListLights[1] = GZ_DIRECTIONAL_LIGHT;
+    valueListLights[1] = (GzPointer)&light2;
+    nameListLights[2] = GZ_DIRECTIONAL_LIGHT;
+    valueListLights[2] = (GzPointer)&light3;
+    status |= m_pRender->GzPutAttribute(3, nameListLights, valueListLights);
 
-        nameListLights[0] = GZ_AMBIENT_LIGHT;
-        valueListLights[0] = (GzPointer)&ambientlight;
-        status |= m_pRender->GzPutAttribute(1, nameListLights, valueListLights);
+    nameListLights[0] = GZ_AMBIENT_LIGHT;
+    valueListLights[0] = (GzPointer)&ambientlight;
+    status |= m_pRender->GzPutAttribute(1, nameListLights, valueListLights);
 
-        /*
-         * Tokens associated with shading 
-         */
-        nameListShader[0]  = GZ_DIFFUSE_COEFFICIENT;
-        valueListShader[0] = (GzPointer)diffuseCoefficient;
+    /*
+        * Tokens associated with shading 
+        */
+    nameListShader[0]  = GZ_DIFFUSE_COEFFICIENT;
+    valueListShader[0] = (GzPointer)diffuseCoefficient;
 
-	/*  
-	* Select either GZ_COLOR or GZ_NORMALS as interpolation mode  
-	*/
-        nameListShader[1]  = GZ_INTERPOLATE;
-        //interpStyle = GZ_COLOR;         /* Gouraud shading */
-        interpStyle = GZ_NORMALS;         /* Phong shading */
-        valueListShader[1] = (GzPointer)&interpStyle;
+/*  
+* Select either GZ_COLOR or GZ_NORMALS as interpolation mode  
+*/
+    nameListShader[1]  = GZ_INTERPOLATE;
+#if PHONG_SHADING
+	interpStyle = GZ_NORMALS;         /* Phong shading */
+#else
+    interpStyle = GZ_COLOR;         /* Gouraud shading */
+#endif
+    valueListShader[1] = (GzPointer)&interpStyle;
 
-        nameListShader[2]  = GZ_AMBIENT_COEFFICIENT;
-        valueListShader[2] = (GzPointer)ambientCoefficient;
-        nameListShader[3]  = GZ_SPECULAR_COEFFICIENT;
-        valueListShader[3] = (GzPointer)specularCoefficient;
-        nameListShader[4]  = GZ_DISTRIBUTION_COEFFICIENT;
-        specpower = 32;
-        valueListShader[4] = (GzPointer)&specpower;
+    nameListShader[2]  = GZ_AMBIENT_COEFFICIENT;
+    valueListShader[2] = (GzPointer)ambientCoefficient;
+    nameListShader[3]  = GZ_SPECULAR_COEFFICIENT;
+    valueListShader[3] = (GzPointer)specularCoefficient;
+    nameListShader[4]  = GZ_DISTRIBUTION_COEFFICIENT;
+    specpower = 32;
+    valueListShader[4] = (GzPointer)&specpower;
 
-        nameListShader[5]  = GZ_TEXTURE_MAP;
-		valueListShader[5] = (GzPointer)NULL;
+    nameListShader[5]  = GZ_TEXTURE_MAP;
+	valueListShader[5] = (GzPointer)NULL;
 
 #if PROCEDURAL_TEXTURE
-		valueListShader[5] = (GzPointer)ptex_fun
+	valueListShader[5] = (GzPointer)ptex_fun
 #elif TEXTURE_MAP
-		valueListShader[5] = (GzPointer)tex_fun;
+	valueListShader[5] = (GzPointer)tex_fun;
 #endif
 		
-		nameListShader[6] = GZ_BUMP_MAP;
-		valueListShader[6] = (GzPointer)NULL;
+	nameListShader[6] = GZ_BUMP_MAP;
+	valueListShader[6] = (GzPointer)NULL;
 
 #if BUMP_MAP
-		valueListShader[6] = (GzPointer)bump_function;
+	valueListShader[6] = (GzPointer)bump_function;
 #endif
 
-        status |= m_pRender->GzPutAttribute(7, nameListShader, valueListShader);
+    status |= m_pRender->GzPutAttribute(7, nameListShader, valueListShader);
 
 
 	status |= m_pRender->GzPushMatrix(scale);  
