@@ -97,38 +97,42 @@ int tex_fun(float u, float v, GzColor color, float dU_dx, float dU_dy, float dV_
   int texture_ys_MIP = texture_ys;
   GzColor *MIP_texture_image = texture_image;
 
+  int texture_xs_MIP_top = texture_xs;
+  int texture_ys_MIP_top = texture_ys;
+  GzColor* MIP_texture_image_top = texture_image;
+
+  float MIP_interp = 1;
+
   if (USE_MIP) {
       // MIP Mapping
 
-      // Calculate relative change in u and v
-      dU_dx *= texture_xs;
-      dU_dy *= texture_xs;
-      dV_dx *= texture_ys;
-      dV_dy *= texture_ys;
-
-      // Find the biggest one
+      // Find the biggest pixel
       if (dU_dx < 0) dU_dx *= -1;
       if (dV_dx < 0) dV_dx *= -1;
       if (dU_dy < 0) dU_dy *= -1;
       if (dV_dy < 0) dV_dy *= -1;
-      float biggest = max(max(max(dU_dx, dU_dy), dV_dx), dV_dy);
-        
-      // Work out how deep to go with the MIP map
+      float biggest = 1.0 / max(max(max(dU_dx, dU_dy), dV_dx), dV_dy);
+
       int div = 0;
-      int mul = 1;
-      while (biggest > 1) {    // biggest > 1
-        biggest /= 2;
-        mul *= 2;
-        div += 1;
-        if (div >= max_MIP) {
-            break;
-        }
+      while (biggest < (texture_xs_MIP + texture_ys_MIP) / 2) {
+          div++;
+          texture_xs_MIP /= 2;
+          texture_ys_MIP /= 2;
+          if (div >= max_MIP) {
+              break;
+          }
       }
-      // Set the new texture as the appropriate MIP map
+      for (int i = 0; i < div - 1; i++) {
+          texture_xs_MIP_top /= 2;
+          texture_ys_MIP_top /= 2;
+      }
+      
       if (div > 0) {
-          texture_xs_MIP = (texture_xs_MIP / mul);
-          texture_ys_MIP = (texture_ys_MIP / mul);
           MIP_texture_image = texture_image_MIP[div - 1];
+          MIP_interp = ((biggest)-((texture_xs_MIP + texture_ys_MIP) / 2)) / (((texture_xs_MIP_top + texture_ys_MIP_top) / 2) - ((texture_xs_MIP + texture_ys_MIP) / 2));
+      }
+      if (div > 1) {
+          MIP_texture_image_top = texture_image_MIP[div - 2];
       }
   }
 
@@ -146,7 +150,13 @@ int tex_fun(float u, float v, GzColor color, float dU_dx, float dU_dy, float dV_
   color[RED] = interpolated_color[RED];
   color[GREEN] = interpolated_color[GREEN];
   color[BLUE] = interpolated_color[BLUE];
-
+  if (USE_MIP) {
+      status |= GzBilinearInterpolation(new_u, new_v, interpolated_color, texture_xs_MIP_top, texture_ys_MIP_top, MIP_texture_image_top);
+      color[RED] = (color[RED] * (1.0 - MIP_interp)) + (interpolated_color[RED] * MIP_interp);
+      color[GREEN] = (color[GREEN] * (1.0 - MIP_interp)) + (interpolated_color[GREEN] * MIP_interp);
+      color[BLUE] = (color[BLUE] * (1.0 - MIP_interp)) + (interpolated_color[BLUE] * MIP_interp);
+  }
+  
   return status;
 }
 
