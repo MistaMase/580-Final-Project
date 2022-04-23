@@ -1163,6 +1163,17 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 	GzTextureIndex affine_texture_coordinate;
 	GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x, pixel_y, pixel_z, affine_texture_coordinate);
 
+	// Calculate dU/dx, dV/dx, dU/dy, dV/dy for MIP mapping
+	GzTextureIndex affine_texture_coordinate_plus_y;
+	GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x, pixel_y + 1.0, pixel_z, affine_texture_coordinate_plus_y);
+	GzTextureIndex affine_texture_coordinate_plus_x;
+	GzPerspectiveCorrectInterpolation(vertex_position_screen_space, last_triangle.textures, pixel_x + 1.0, pixel_y, pixel_z, affine_texture_coordinate_plus_x);
+	float dU_dy = affine_texture_coordinate_plus_y[U] - affine_texture_coordinate[U];
+	float dV_dy = affine_texture_coordinate_plus_y[V] - affine_texture_coordinate[V];
+	float dU_dx = affine_texture_coordinate_plus_x[U] - affine_texture_coordinate[U];
+	float dV_dx = affine_texture_coordinate_plus_x[V] - affine_texture_coordinate[V];
+
+
 	// Flat Shading - Compute pixel color using first triangle normal
 	if (interp_mode == GZ_FLAT) {
 		// For flat shading, we specifically want the pre-transformed, pre-sorted first vertex's normal of the triangle to use for lighting. Only when
@@ -1227,7 +1238,7 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 		if (*tex_fun != NULL) {
 			// Get the color value from the texture
 			GzColor texture_color = { 0.0, 0.0, 0.0 };
-			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
+			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color, dU_dx, dU_dy, dV_dx, dV_dy);
 
 			// Multiply the light intensity by the texture color
 			color[RED] *= texture_color[RED];
@@ -1287,7 +1298,7 @@ int GzRender::GzLightingShading(int pixel_x, int pixel_y, float pixel_z, GzColor
 		if (*tex_fun != NULL) {
 			// Get the color from the texture
 			GzColor texture_color = { 0.0, 0.0, 0.0 };
-			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color);
+			tex_fun(affine_texture_coordinate[U], affine_texture_coordinate[V], texture_color, dU_dx, dU_dy, dV_dx, dV_dy);
 
 			// Find the color at the pixel using the interpolated normal
 			status |= GzComputePixelColor(color, interpolated_normal, texture_color, (GZ_USE_TEXTURE | GZ_USE_PHONG));

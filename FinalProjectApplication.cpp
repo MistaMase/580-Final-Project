@@ -22,7 +22,7 @@ static char THIS_FILE[]=__FILE__;
 #define OUTFILE "output.ppm"
 
 
-extern int tex_fun(float u, float v, GzColor color);		/* image texture function */
+extern int tex_fun(float u, float v, GzColor color, float dU_dx, float dU_dy, float dV_dx, float dV_dy);		/* image texture function */
 extern int bump_function(float u, float v, GzNormal normal);	/* Bump map texture function */
 extern int ptex_fun(float u, float v, GzColor color);		/* procedural texture function */
 extern int GzFreeTexture();
@@ -100,19 +100,36 @@ GzMatrix	rotateY =
 }; 
 
 #if 1 	/* set up app-defined camera if desired, else use camera defaults */
-    camera.position[X] = -3;
-    camera.position[Y] = -25;
-    camera.position[Z] = -4;
 
-    camera.lookat[X] = 7.8;
-    camera.lookat[Y] = 0.7;
-    camera.lookat[Z] = 6.5;
+	/* Camera position for looking down the plane (also have to not do the scale, rotation transforms (around line 208))
+	camera.position[X] = 21;
+    camera.position[Y] = -3;
+    camera.position[Z] = 10;
 
-    camera.worldup[X] = -0.2;
-    camera.worldup[Y] = 1.0;
-    camera.worldup[Z] = 0.0;
+    camera.lookat[X] = 0;
+    camera.lookat[Y] = 0;
+    camera.lookat[Z] = 10;
 
-    camera.FOV = 63.7;              /* degrees *              /* degrees */
+    camera.worldup[X] = 0;
+	camera.worldup[Y] = -1;
+    camera.worldup[Z] = 0;
+
+	camera.FOV = 80;
+	*/
+
+	camera.position[X] = -3;
+	camera.position[Y] = -25;
+	camera.position[Z] = -4;
+
+	camera.lookat[X] = 7.8;
+	camera.lookat[Y] = 0.7;
+	camera.lookat[Z] = 6.5;
+
+	camera.worldup[X] = -0.2;
+	camera.worldup[Y] = 1.0;
+	camera.worldup[Z] = 0.0;
+	
+	camera.FOV = 63.7;              /* degrees *              /* degrees */
 
 	status |= m_pRender->GzPutCamera(camera); 
 #endif 

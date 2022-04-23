@@ -8,25 +8,36 @@
 #define TEXTURE_NAME "pebbles_texture.ppm"
 #define BUMP_TEXTURE_NAME "pebbles_bump.ppm"
 
+#define USE_MIP true        // do we want to use MIP?
+
 GzColor	*texture_image = NULL;
+GzColor* texture_image_MIP[16];
 float* bump_image = NULL;
 int texture_xs, texture_ys;
 int bump_xs, bump_ys;
 int texture_reset = 1;
 int bump_reset = 1;
+int max_MIP = 0;
 
 // Function prototype
 int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image);
 int GzFiniteDifference(float u, float v, GzNormal& bump_map_normal, int image_size_x, int image_size_y, float* image);
 
 /* Image texture function */
-int tex_fun(float u, float v, GzColor color)
+int tex_fun(float u, float v, GzColor color, float dU_dx, float dU_dy, float dV_dx, float dV_dy)
 {
   unsigned char		pixel[3];
   unsigned char     dummy;
   char  		foo[8];
   int   		i;
   FILE			*fd;
+
+  if (!USE_MIP) {
+      dU_dx = 0;
+      dU_dy = 0;
+      dV_dx = 0;
+      dV_dy = 0;
+  }
 
   if (texture_reset) {          /* open and load texture file */
     fd = fopen (TEXTURE_NAME, "rb");
@@ -46,10 +57,79 @@ int tex_fun(float u, float v, GzColor color)
       texture_image[i][RED] = (float)((int)pixel[RED]) * (1.0f / 255.0f);
       texture_image[i][GREEN] = (float)((int)pixel[GREEN]) * (1.0f / 255.0f);
       texture_image[i][BLUE] = (float)((int)pixel[BLUE]) * (1.0f / 255.0f);
-      }
+    }
+
+    if (USE_MIP) {
+        int tex_size = 2;
+        int depth = 0;
+        while ((tex_size < texture_xs) && (tex_size < texture_ys)) {
+            // Create the MIP maps until width is 1 pixel
+            texture_image_MIP[depth] = (GzColor*)malloc(sizeof(GzColor) * ((texture_xs / tex_size) + 1) * ((texture_ys / tex_size) + 1));
+            for (int x = 0; x < (texture_xs / tex_size); x++) {
+                for (int y = 0; y < (texture_ys / tex_size); y++) {
+                    texture_image_MIP[depth][y * (texture_xs / tex_size) + x][RED] = 0;
+                    texture_image_MIP[depth][y * (texture_xs / tex_size) + x][GREEN] = 0;
+                    texture_image_MIP[depth][y * (texture_xs / tex_size) + x][BLUE] = 0;
+                    int kernel_size = tex_size;
+                    for (int dy = 0; dy < (kernel_size); dy++) {
+                        for (int dx = 0; dx < (kernel_size); dx++) {
+                            texture_image_MIP[depth][y * (texture_xs / tex_size) + x][RED] += texture_image[((y * tex_size) + dy) * (texture_xs)+((x * tex_size) + dx)][RED];
+                            texture_image_MIP[depth][y * (texture_xs / tex_size) + x][GREEN] += texture_image[((y * tex_size) + dy) * (texture_xs)+((x * tex_size) + dx)][GREEN];
+                            texture_image_MIP[depth][y * (texture_xs / tex_size) + x][BLUE] += texture_image[((y * tex_size) + dy) * (texture_xs)+((x * tex_size) + dx)][BLUE];
+                        }
+                    }
+                    texture_image_MIP[depth][y * (texture_xs / tex_size) + x][RED] /= float(kernel_size * kernel_size);
+                    texture_image_MIP[depth][y * (texture_xs / tex_size) + x][GREEN] /= float(kernel_size * kernel_size);
+                    texture_image_MIP[depth][y * (texture_xs / tex_size) + x][BLUE] /= float(kernel_size * kernel_size);
+                }
+            }
+            depth++;
+            tex_size *= 2;
+        }
+        max_MIP = depth - 1;
+    }
 
     texture_reset = 0;          /* init is done */
 	fclose(fd);
+  }
+
+  int texture_xs_MIP = texture_xs;
+  int texture_ys_MIP = texture_ys;
+  GzColor *MIP_texture_image = texture_image;
+
+  if (USE_MIP) {
+      // MIP Mapping
+
+      // Calculate relative change in u and v
+      dU_dx *= texture_xs;
+      dU_dy *= texture_xs;
+      dV_dx *= texture_ys;
+      dV_dy *= texture_ys;
+
+      // Find the biggest one
+      if (dU_dx < 0) dU_dx *= -1;
+      if (dV_dx < 0) dV_dx *= -1;
+      if (dU_dy < 0) dU_dy *= -1;
+      if (dV_dy < 0) dV_dy *= -1;
+      float biggest = max(max(max(dU_dx, dU_dy), dV_dx), dV_dy);
+        
+      // Work out how deep to go with the MIP map
+      int div = 0;
+      int mul = 1;
+      while (biggest > 1) {    // biggest > 1
+        biggest /= 2;
+        mul *= 2;
+        div += 1;
+        if (div >= max_MIP) {
+            break;
+        }
+      }
+      // Set the new texture as the appropriate MIP map
+      if (div > 0) {
+          texture_xs_MIP = (texture_xs_MIP / mul);
+          texture_ys_MIP = (texture_ys_MIP / mul);
+          MIP_texture_image = texture_image_MIP[div - 1];
+      }
   }
 
   // Invalid texture coordiantes - Set to closest possible valid value
@@ -62,7 +142,7 @@ int tex_fun(float u, float v, GzColor color)
   // Bilinear interpolation
   int status = GZ_SUCCESS;
   GzColor interpolated_color;
-  status |= GzBilinearInterpolation(new_u, new_v, interpolated_color, texture_xs, texture_ys, texture_image);
+  status |= GzBilinearInterpolation(new_u, new_v, interpolated_color, texture_xs_MIP, texture_ys_MIP, MIP_texture_image);
   color[RED] = interpolated_color[RED];
   color[GREEN] = interpolated_color[GREEN];
   color[BLUE] = interpolated_color[BLUE];
