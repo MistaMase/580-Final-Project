@@ -18,8 +18,8 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-#define INFILE				"ppot.asc"
-// #define INFILE				"pot4.asc" 
+//#define INFILE				"ppot.asc"
+#define INFILE				"pot4.asc" 
 #define TEXTURE_NAME		"pebbles"		// Only used for outputting the correctly named file
 #define PROCEDURAL_TEXTURE	false
 #define TEXTURE_MAP			true
