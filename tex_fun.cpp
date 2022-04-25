@@ -9,8 +9,7 @@
 #define BUMP_STRENGTH       1.0f
 
 GzColor	*texture_image = NULL;
-//float* bump_image = NULL;
-GzColor* bump_image = NULL;
+float* bump_image = NULL;
 int texture_xs, texture_ys;
 int bump_xs, bump_ys;
 int texture_reset = 1;
@@ -18,7 +17,7 @@ int bump_reset = 1;
 
 // Function prototype
 int GzBilinearInterpolation(float u, float v, GzColor& interpolated_color, int image_size_x, int image_size_y, GzColor* image, int num_dimensions);
-int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, /*float* */ GzColor* image);
+int computeBumpDisplacement(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, float* image);
 
 /* Image texture function */
 int tex_fun(float u, float v, GzColor color)
@@ -84,28 +83,22 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 
     if (bump_reset) {          /* open and load texture file */
         char asset_location[50];
-        //sprintf(asset_location, "%s\\%s\\%s_bump.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
-        sprintf(asset_location, "%s\\%s\\%s_normal.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
+        sprintf(asset_location, "%s\\%s\\%s_bump.ppm", ASSETS_FOLDER, BASE_TEXTURE_NAME, BASE_TEXTURE_NAME);
         fd = fopen(asset_location, "rb");
         if (fd == NULL) {
             fprintf(stderr, "texture file not found\n");
             exit(-1);
         }
         fscanf(fd, "%s %d %d %c", foo, &bump_xs, &bump_ys, &dummy);
-        //bump_image = (float*)malloc(sizeof(float) * (bump_xs + 1) * (bump_ys + 1));
-        bump_image = (GzColor*)malloc(sizeof(GzColor) * (bump_xs + 1) * (bump_ys + 1));
+        bump_image = (float*)malloc(sizeof(float) * (bump_xs + 1) * (bump_ys + 1));
         if (bump_image == NULL) {
             fprintf(stderr, "malloc for texture image failed\n");
             exit(-1);
         }
 
         for (i = 0; i < bump_xs * bump_ys; i++) {	/* create array of GzColor values */
-            /*fread(pixel, sizeof(unsigned char), 1, fd);
-            bump_image[i] = (float)((int)pixel[0]) * (1.0f / 255.0f);*/
-            fread(pixel, sizeof(pixel), 1, fd);
-            bump_image[i][X] = (float)((int)pixel[X]) * (1.0f / 255.0f);
-            bump_image[i][Y] = (float)((int)pixel[Y]) * (1.0f / 255.0f);
-            bump_image[i][Z] = (float)((int)pixel[Z]) * (1.0f / 255.0f);
+            fread(pixel, sizeof(unsigned char), 1, fd);
+            bump_image[i] = (float)((int)pixel[0]) * (1.0f / 255.0f);
         }
 
         bump_reset = 0;          /* init is done */
@@ -115,7 +108,7 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
     // Compute the new normal from the normal map
     int status = GZ_SUCCESS;
     GzCoord bump_map_normal;
-    status |= computeBumpNormal(u, v, given_normal, bump_map_normal, bump_xs, bump_ys, bump_image);
+    status |= computeBumpDisplacement(u, v, given_normal, bump_map_normal, bump_xs, bump_ys, bump_image);
     bump_normal[X] = bump_map_normal[X];
     bump_normal[Y] = bump_map_normal[Y];
     bump_normal[Z] = bump_map_normal[Z];
@@ -124,7 +117,7 @@ int bump_function(float u, float v, GzCoord given_normal, GzCoord& bump_normal)
 }
 
 /* Computes the surface normals of a normal texture image */
-int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, /*float* */ GzColor* image) {
+int computeBumpDisplacement(float u, float v, GzCoord given_normal, GzCoord& bump_map_normal, int image_size_x, int image_size_y, float* image) {
     // Status
     int status = GZ_SUCCESS;
 
@@ -144,29 +137,28 @@ int computeBumpNormal(float u, float v, GzCoord given_normal, GzCoord& bump_map_
 
     // TODO Used for heightmap-style bump maps. Idk if it works from the looks of resulting texture but the math looks right
     // Compute derivative in u and v directions from the bump map
-   /* float f0 = image[v_floor * image_size_x + u_floor - 1];
+    float f0 = image[v_floor * image_size_x + u_floor - 1];
     float f1 = image[v_floor * image_size_x + u_floor + 1];
     float f2 = image[(v_floor + 1) * image_size_x + u_floor];
     float f3 = image[(v_floor - 1) * image_size_x + u_floor];
     float surface_u = (image[v_floor * image_size_x + u_floor + 1] - image[v_floor * image_size_x + u_floor]) * (BUMP_STRENGTH / 2.0f);
-    float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[(v_floor - 1) * image_size_x + u_floor]) * (BUMP_STRENGTH / 2.0f);*/
+    float surface_v = (image[(v_floor + 1) * image_size_x + u_floor] - image[(v_floor - 1) * image_size_x + u_floor]) * (BUMP_STRENGTH / 2.0f);
 
     // Add the offset in the U and V direction
-    /*bump_map_normal[U] = given_normal[X] + surface_u;
+    bump_map_normal[U] = given_normal[X] + surface_u;
     bump_map_normal[V] = given_normal[Y] + surface_v;
-    bump_map_normal[Z] = given_normal[Z];*/
-
-    // Normal Mapping
-    GzCoord normal_vector;
-    GzBilinearInterpolation(u, v, normal_vector, image_size_x, image_size_y, bump_image, 3);
-
-    // Deal with Z being in range of [-1, 1]
-    normal_vector[Z] = 2.0f * (normal_vector[Z] - 0.5f);
+    bump_map_normal[Z] = given_normal[Z];
 
     // Scale by the BUMP STRENGTH, for normal mapping this should probably be 1
-    vector_scale(BUMP_STRENGTH, normal_vector, normal_vector);
-    vector_add(given_normal, normal_vector, bump_map_normal);
+    vector_scale(BUMP_STRENGTH, bump_map_normal, bump_map_normal);
     normalize(bump_map_normal);
+
+    // Deal with singularities
+    if (bump_map_normal[U] == 0 && bump_map_normal[V] == 0) {
+        bump_map_normal[U] = given_normal[U];
+        bump_map_normal[V] = given_normal[V];
+        bump_map_normal[Z] = given_normal[Z];
+    }
 
     return status;
 }

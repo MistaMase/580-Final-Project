@@ -22,8 +22,8 @@ static char THIS_FILE[]=__FILE__;
 // #define INFILE				"pot4.asc" 
 #define TEXTURE_NAME		"pebbles"		// Only used for outputting the correctly named file
 #define PROCEDURAL_TEXTURE	false
-#define TEXTURE_MAP			false
-#define BUMP_MAP			true
+#define TEXTURE_MAP			true
+#define BUMP_MAP			false
 #define PHONG_SHADING		true			// This should always be left true for bump mapping
 
 
